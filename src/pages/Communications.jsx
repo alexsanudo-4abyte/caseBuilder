@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,7 @@ export default function Communications() {
   const [channelFilter, setChannelFilter] = useState('all');
   const [newMessageOpen, setNewMessageOpen] = useState(false);
   const [selectedComm, setSelectedComm] = useState(null);
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
   const queryClient = useQueryClient();
 
   const [newMessage, setNewMessage] = useState({
@@ -347,7 +349,14 @@ export default function Communications() {
                           {comm.communication_date && format(new Date(comm.communication_date), 'MMM d, h:mm a')}
                         </p>
                         {caseInfo && (
-                          <Badge variant="outline" className="mt-2 text-xs">
+                          <Badge 
+                            variant="outline" 
+                            className="mt-2 text-xs cursor-pointer hover:bg-slate-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCaseId(comm.case_id);
+                            }}
+                          >
                             {caseInfo.claimant_name}
                           </Badge>
                         )}
@@ -417,6 +426,13 @@ export default function Communications() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Client Case Profile Modal */}
+      <ClientCaseProfile
+        caseId={selectedCaseId}
+        open={!!selectedCaseId}
+        onOpenChange={(open) => !open && setSelectedCaseId(null)}
+      />
     </div>
   );
 }

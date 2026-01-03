@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +33,7 @@ import {
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState('7d');
   const [user, setUser] = useState(null);
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -201,12 +203,11 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-3">
               {highPriorityCases.slice(0, 4).map((caseItem) => (
-                <Link 
+                <div 
                   key={caseItem.id} 
-                  to={createPageUrl(`CaseDetail?id=${caseItem.id}`)}
-                  className="block"
+                  className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+                  onClick={() => setSelectedCaseId(caseItem.id)}
                 >
-                  <div className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-medium text-slate-900 text-sm">{caseItem.claimant_name}</p>
@@ -217,7 +218,7 @@ export default function Dashboard() {
                       </Badge>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
               {highPriorityCases.length === 0 && (
                 <div className="text-center py-6">
@@ -261,6 +262,13 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Client Case Profile Modal */}
+      <ClientCaseProfile
+        caseId={selectedCaseId}
+        open={!!selectedCaseId}
+        onOpenChange={(open) => !open && setSelectedCaseId(null)}
+      />
     </div>
   );
 }

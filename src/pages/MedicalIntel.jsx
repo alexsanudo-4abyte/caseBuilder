@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,7 @@ export default function MedicalIntel() {
   const [newRecordOpen, setNewRecordOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
   const queryClient = useQueryClient();
 
   const [newRecord, setNewRecord] = useState({
@@ -396,7 +398,10 @@ Generate:
 
                 return (
                   <div key={record.id} className="p-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between">
+                    <div 
+                      className="flex items-center justify-between cursor-pointer"
+                      onClick={() => setSelectedCaseId(record.case_id)}
+                    >
                       <div className="flex items-center gap-4">
                         <div className="p-2 bg-slate-100 rounded-lg">
                           <Building className="w-5 h-5 text-slate-600" />
@@ -463,6 +468,13 @@ Generate:
           )}
         </CardContent>
       </Card>
+
+      {/* Client Case Profile Modal */}
+      <ClientCaseProfile
+        caseId={selectedCaseId}
+        open={!!selectedCaseId}
+        onOpenChange={(open) => !open && setSelectedCaseId(null)}
+      />
     </div>
   );
 }

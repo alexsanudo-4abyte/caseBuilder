@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -54,6 +55,7 @@ export default function FraudMonitor() {
   const [selectedAlert, setSelectedAlert] = useState(null);
   const [statusFilter, setStatusFilter] = useState('new');
   const [resolutionNotes, setResolutionNotes] = useState('');
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: alerts = [], isLoading } = useQuery({
@@ -322,6 +324,13 @@ export default function FraudMonitor() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Client Case Profile Modal */}
+      <ClientCaseProfile
+        caseId={selectedCaseId}
+        open={!!selectedCaseId}
+        onOpenChange={(open) => !open && setSelectedCaseId(null)}
+      />
     </div>
   );
 }

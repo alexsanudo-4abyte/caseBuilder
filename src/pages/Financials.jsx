@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,6 +38,7 @@ import { format } from 'date-fns';
 
 export default function Financials() {
   const [timeRange, setTimeRange] = useState('6m');
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
 
   const { data: cases = [] } = useQuery({
     queryKey: ['casesForFinance'],
@@ -315,7 +317,11 @@ export default function Financials() {
                 .map((c, index) => {
                   const value = ((c.estimated_value_low || 0) + (c.estimated_value_high || 0)) / 2;
                   return (
-                    <div key={c.id} className="flex items-center justify-between">
+                    <div 
+                      key={c.id} 
+                      className="flex items-center justify-between cursor-pointer hover:bg-slate-50 p-2 rounded transition-colors"
+                      onClick={() => setSelectedCaseId(c.id)}
+                    >
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                           index === 0 ? 'bg-amber-100 text-amber-700' :
@@ -342,6 +348,13 @@ export default function Financials() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Client Case Profile Modal */}
+      <ClientCaseProfile
+        caseId={selectedCaseId}
+        open={!!selectedCaseId}
+        onOpenChange={(open) => !open && setSelectedCaseId(null)}
+      />
     </div>
   );
 }
