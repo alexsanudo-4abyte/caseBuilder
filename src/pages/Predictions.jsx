@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import PredictionDetailModal from '../components/predictions/PredictionDetailModal';
+import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,6 +45,8 @@ import { format } from 'date-fns';
 export default function Predictions() {
   const [predictionType, setPredictionType] = useState('settlement_value');
   const [generating, setGenerating] = useState(false);
+  const [selectedPrediction, setSelectedPrediction] = useState(null);
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: predictions = [], isLoading } = useQuery({
@@ -308,7 +312,8 @@ Based on historical data patterns for similar cases, provide a realistic predict
               {predictions.map((prediction) => (
                 <div
                   key={prediction.id}
-                  className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors"
+                  className="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+                  onClick={() => setSelectedPrediction(prediction)}
                 >
                   <div className="flex items-center gap-4">
                     <div className={`p-3 rounded-xl ${
@@ -396,6 +401,24 @@ Based on historical data patterns for similar cases, provide a realistic predict
           </div>
         </CardContent>
       </Card>
+
+      {/* Prediction Detail Modal */}
+      <PredictionDetailModal
+        prediction={selectedPrediction}
+        open={!!selectedPrediction}
+        onOpenChange={(open) => !open && setSelectedPrediction(null)}
+        onViewCase={(caseId) => {
+          setSelectedPrediction(null);
+          setSelectedCaseId(caseId);
+        }}
+      />
+
+      {/* Client Case Profile Modal */}
+      <ClientCaseProfile
+        caseId={selectedCaseId}
+        open={!!selectedCaseId}
+        onOpenChange={(open) => !open && setSelectedCaseId(null)}
+      />
     </div>
   );
 }
