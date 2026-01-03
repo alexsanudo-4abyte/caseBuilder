@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import ClientCaseProfile from '../cases/ClientCaseProfile';
 import {
   Table,
   TableBody,
@@ -50,6 +51,8 @@ const priorityConfig = {
 };
 
 export default function CasesTable({ cases = [], showActions = true, compact = false }) {
+  const [selectedCaseId, setSelectedCaseId] = useState(null);
+
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-emerald-600';
     if (score >= 60) return 'text-amber-600';
@@ -77,7 +80,11 @@ export default function CasesTable({ cases = [], showActions = true, compact = f
             const StatusIcon = status.icon;
             
             return (
-              <TableRow key={caseItem.id} className="hover:bg-slate-50/50 transition-colors">
+              <TableRow 
+                key={caseItem.id} 
+                className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                onClick={() => setSelectedCaseId(caseItem.id)}
+              >
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className={priorityConfig[caseItem.priority] || priorityConfig.medium}>
@@ -149,19 +156,22 @@ export default function CasesTable({ cases = [], showActions = true, compact = f
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCaseId(caseItem.id);
+                        }}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Quick View
+                        </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link to={createPageUrl(`CaseDetail?id=${caseItem.id}`)}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
+                            <ArrowUpRight className="w-4 h-4 mr-2" />
+                            Full Details Page
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <FileText className="w-4 h-4 mr-2" />
                           Documents
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <ArrowUpRight className="w-4 h-4 mr-2" />
-                          Open in New Tab
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -179,6 +189,13 @@ export default function CasesTable({ cases = [], showActions = true, compact = f
           )}
         </TableBody>
       </Table>
+
+      {/* Client Case Profile Modal */}
+      <ClientCaseProfile
+        caseId={selectedCaseId}
+        open={!!selectedCaseId}
+        onOpenChange={(open) => !open && setSelectedCaseId(null)}
+      />
     </div>
   );
 }
