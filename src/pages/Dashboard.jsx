@@ -208,15 +208,14 @@ export default function Dashboard() {
                   className="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
                   onClick={() => setSelectedCaseId(caseItem.id)}
                 >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-slate-900 text-sm">{caseItem.claimant_name}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{caseItem.tort_campaign || caseItem.case_type}</p>
-                      </div>
-                      <Badge className={caseItem.priority === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
-                        {caseItem.priority}
-                      </Badge>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium text-slate-900 text-sm">{caseItem.claimant_name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{caseItem.tort_campaign || caseItem.case_type}</p>
                     </div>
+                    <Badge className={caseItem.priority === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
+                      {caseItem.priority}
+                    </Badge>
                   </div>
                 </div>
               ))}
