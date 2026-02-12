@@ -59,6 +59,8 @@ import IntakeHub from './pages/IntakeHub';
 import MedicalIntel from './pages/MedicalIntel';
 import Predictions from './pages/Predictions';
 import Settings from './pages/Settings';
+import PublicIntake from './pages/PublicIntake';
+import IntakeReview from './pages/IntakeReview';
 import __Layout from './Layout.jsx';
 
 
@@ -75,6 +77,8 @@ export const PAGES = {
     "MedicalIntel": MedicalIntel,
     "Predictions": Predictions,
     "Settings": Settings,
+    "PublicIntake": PublicIntake,
+    "IntakeReview": IntakeReview,
 }
 
 export const pagesConfig = {
