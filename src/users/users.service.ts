@@ -21,4 +21,8 @@ export class UsersService {
   create(data: Partial<UserEntity>): Promise<UserEntity> {
     return this.repo.save(this.repo.create(data as UserEntity));
   }
+
+  async update(id: string, data: Partial<UserEntity>): Promise<void> {
+    await this.repo.update(id, data);
+  }
 }

@@ -84,6 +84,15 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException();
         return { id: user.id, full_name: user.full_name, email: user.email, role: user.role };
     }
+    async updateProfile(userId, data) {
+        const updates = {};
+        if (data.full_name)
+            updates.full_name = data.full_name;
+        if (data.password)
+            updates.password = await bcrypt.hash(data.password, 10);
+        await this.users.update(userId, updates);
+        return this.me(userId);
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([

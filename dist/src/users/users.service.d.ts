@@ -6,4 +6,5 @@ export declare class UsersService {
     findByEmail(email: string): Promise<UserEntity | null>;
     findById(id: string): Promise<UserEntity | null>;
     create(data: Partial<UserEntity>): Promise<UserEntity>;
+    update(id: string, data: Partial<UserEntity>): Promise<void>;
 }

@@ -31,6 +31,9 @@ let UsersService = class UsersService {
     create(data) {
         return this.repo.save(this.repo.create(data));
     }
+    async update(id, data) {
+        await this.repo.update(id, data);
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

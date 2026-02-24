@@ -40,4 +40,12 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
     return { id: user.id, full_name: user.full_name, email: user.email, role: user.role };
   }
+
+  async updateProfile(userId: string, data: { full_name?: string; password?: string }) {
+    const updates: Partial<UserEntity> = {};
+    if (data.full_name) updates.full_name = data.full_name;
+    if (data.password) updates.password = await bcrypt.hash(data.password, 10);
+    await this.users.update(userId, updates);
+    return this.me(userId);
+  }
 }

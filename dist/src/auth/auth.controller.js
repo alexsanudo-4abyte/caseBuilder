@@ -31,6 +31,9 @@ let AuthController = class AuthController {
     me(req) {
         return this.authService.me(req.user.userId);
     }
+    updateProfile(req, body) {
+        return this.authService.updateProfile(req.user.userId, body);
+    }
     logout() {
         return { ok: true };
     }
@@ -59,6 +62,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "me", null);
+__decorate([
+    (0, common_1.Patch)('profile'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "updateProfile", null);
 __decorate([
     (0, public_decorator_1.Public)(),
     (0, common_1.Post)('logout'),

@@ -33,6 +33,15 @@ export declare class AuthController {
         email: string;
         role: string;
     }>;
+    updateProfile(req: any, body: {
+        full_name?: string;
+        password?: string;
+    }): Promise<{
+        id: string;
+        full_name: string;
+        email: string;
+        role: string;
+    }>;
     logout(): {
         ok: boolean;
     };

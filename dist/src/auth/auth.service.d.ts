@@ -30,4 +30,13 @@ export declare class AuthService {
         email: string;
         role: string;
     }>;
+    updateProfile(userId: string, data: {
+        full_name?: string;
+        password?: string;
+    }): Promise<{
+        id: string;
+        full_name: string;
+        email: string;
+        role: string;
+    }>;
 }

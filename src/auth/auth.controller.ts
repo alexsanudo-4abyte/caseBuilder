@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 
@@ -22,6 +22,11 @@ export class AuthController {
   @Get('me')
   me(@Req() req: any) {
     return this.authService.me(req.user.userId);
+  }
+
+  @Patch('profile')
+  updateProfile(@Req() req: any, @Body() body: { full_name?: string; password?: string }) {
+    return this.authService.updateProfile(req.user.userId, body);
   }
 
   @Public()
