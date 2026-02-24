@@ -85,6 +85,12 @@ export const auth = {
     return response.user;
   },
 
+  async register(full_name, email, password) {
+    const response = await http.post('/auth/register', { full_name, email, password });
+    localStorage.setItem('cb_access_token', response.access_token);
+    return response.user;
+  },
+
   logout() {
     localStorage.removeItem('cb_access_token');
     window.location.href = '/Login';

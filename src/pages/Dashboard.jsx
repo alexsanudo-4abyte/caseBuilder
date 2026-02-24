@@ -179,15 +179,10 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Portfolio Value Chart */}
-          <CaseValueChart />
         </div>
 
         {/* Right Column */}
         <div className="space-y-6">
-          {/* AI Insights */}
-          <AIInsightsPanel />
-
           {/* High Priority Cases */}
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-3">

@@ -42,6 +42,14 @@ export const AuthProvider = ({ children }) => {
     return loggedInUser;
   };
 
+  const register = async (full_name, email, password) => {
+    const loggedInUser = await base44.auth.register(full_name, email, password);
+    setUser(loggedInUser);
+    setIsAuthenticated(true);
+    setAuthError(null);
+    return loggedInUser;
+  };
+
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
@@ -62,10 +70,11 @@ export const AuthProvider = ({ children }) => {
         user,
         isAuthenticated,
         isLoadingAuth,
-        isLoadingPublicSettings: false, // kept for App.jsx compatibility
+        isLoadingPublicSettings: false,
         authError,
-        appPublicSettings: null,        // kept for App.jsx compatibility
+        appPublicSettings: null,
         login,
+        register,
         logout,
         navigateToLogin,
         checkAppState,

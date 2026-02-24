@@ -193,17 +193,6 @@ export default function Layout({ children, currentPageName }) {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Notifications */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="w-5 h-5 text-slate-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-              </Button>
-
-              {/* AI Alerts */}
-              <Button variant="ghost" size="icon" className="relative">
-                <AlertTriangle className="w-5 h-5 text-amber-500" />
-                <Badge className="absolute -top-1 -right-1 h-5 min-w-5 bg-amber-500 text-[10px]">3</Badge>
-              </Button>
 
               {/* User Menu */}
               <DropdownMenu>
