@@ -70,6 +70,14 @@ let AuthService = class AuthService {
             user: { id: user.id, full_name: user.full_name, email: user.email, role: user.role },
         };
     }
+    async register(fullName, email, password) {
+        const existing = await this.users.findByEmail(email);
+        if (existing)
+            throw new common_1.BadRequestException('Email already in use');
+        const hash = await bcrypt.hash(password, 10);
+        const user = await this.users.create({ full_name: fullName, email, password: hash, role: 'attorney' });
+        return this.login(user);
+    }
     async me(userId) {
         const user = await this.users.findById(userId);
         if (!user)

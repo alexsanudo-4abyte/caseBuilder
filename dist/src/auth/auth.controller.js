@@ -21,6 +21,9 @@ let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
+    async register(body) {
+        return this.authService.register(body.full_name, body.email, body.password);
+    }
     async login(body) {
         const user = await this.authService.validateUser(body.email, body.password);
         return this.authService.login(user);
@@ -33,6 +36,14 @@ let AuthController = class AuthController {
     }
 };
 exports.AuthController = AuthController;
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Post)('register'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "register", null);
 __decorate([
     (0, public_decorator_1.Public)(),
     (0, common_1.Post)('login'),

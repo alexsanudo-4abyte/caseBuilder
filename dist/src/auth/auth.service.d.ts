@@ -15,6 +15,15 @@ export declare class AuthService {
             role: string;
         };
     }>;
+    register(fullName: string, email: string, password: string): Promise<{
+        access_token: string;
+        user: {
+            id: string;
+            full_name: string;
+            email: string;
+            role: string;
+        };
+    }>;
     me(userId: string): Promise<{
         id: string;
         full_name: string;
