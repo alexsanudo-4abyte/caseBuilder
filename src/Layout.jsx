@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { base44 } from '@/api/base44Client';
 import {
@@ -33,25 +33,57 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 export default function Layout({ children, currentPageName }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({ full_name: '', password: '' });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState('');
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         const userData = await base44.auth.me();
         setUser(userData);
+        setProfileForm({ full_name: userData.full_name, password: '' });
       } catch (e) {
         console.log('User not logged in');
       }
     };
     loadUser();
   }, []);
+
+  const handleProfileSave = async (e) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileError('');
+    try {
+      const updates = { full_name: profileForm.full_name };
+      if (profileForm.password) updates.password = profileForm.password;
+      const updated = await base44.auth.updateProfile(updates);
+      setUser(updated);
+      setProfileForm({ full_name: updated.full_name, password: '' });
+      setProfileOpen(false);
+    } catch (err) {
+      setProfileError(err?.data?.message ?? 'Failed to save changes');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const navigation = [
     { name: 'Command Center', page: 'Dashboard', icon: LayoutDashboard },
@@ -71,6 +103,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-slate-50">
       <style>{`
         :root {
@@ -209,11 +242,11 @@ export default function Layout({ children, currentPageName }) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setProfileOpen(true)}>
                     <Users className="w-4 h-4 mr-2" />
-                    Profile
+                    Edit profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(createPageUrl('Settings'))}>
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
                   </DropdownMenuItem>
@@ -234,5 +267,49 @@ export default function Layout({ children, currentPageName }) {
         </main>
       </div>
     </div>
+
+    {/* Profile edit dialog */}
+    <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit profile</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleProfileSave} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="profile-name">Full name</Label>
+            <Input
+              id="profile-name"
+              value={profileForm.full_name}
+              onChange={(e) => setProfileForm(f => ({ ...f, full_name: e.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="profile-email">Email</Label>
+            <Input id="profile-email" value={user?.email ?? ''} disabled className="bg-slate-50" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="profile-password">New password <span className="text-slate-400 font-normal">(leave blank to keep current)</span></Label>
+            <Input
+              id="profile-password"
+              type="password"
+              placeholder="••••••••"
+              value={profileForm.password}
+              onChange={(e) => setProfileForm(f => ({ ...f, password: e.target.value }))}
+            />
+          </div>
+          {profileError && (
+            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-md">{profileError}</p>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setProfileOpen(false)}>Cancel</Button>
+            <Button type="submit" disabled={profileSaving}>
+              {profileSaving ? 'Saving…' : 'Save changes'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

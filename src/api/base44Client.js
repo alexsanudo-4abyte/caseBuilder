@@ -91,6 +91,10 @@ export const auth = {
     return response.user;
   },
 
+  updateProfile(data) {
+    return http.patch('/auth/profile', data);
+  },
+
   logout() {
     localStorage.removeItem('cb_access_token');
     window.location.href = '/Login';
