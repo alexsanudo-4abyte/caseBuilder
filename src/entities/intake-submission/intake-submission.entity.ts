@@ -35,7 +35,7 @@ export class IntakeSubmissionEntity extends BaseEntity {
   @Column({ nullable: true, type: 'jsonb' })
   key_facts: string[];
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   qualification_score: number;
 
   @Column({ nullable: true })

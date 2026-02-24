@@ -14,7 +14,7 @@ export class FinancialRecordEntity extends BaseEntity {
   @Column({ nullable: true })
   record_type: string;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   amount: number;
 
   @Column({ nullable: true })

@@ -14,16 +14,16 @@ export class PredictionEntity extends BaseEntity {
   @Column({ nullable: true })
   prediction_type: string;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   predicted_value: number;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   predicted_range_low: number;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   predicted_range_high: number;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   confidence_score: number;
 
   @Column({ nullable: true, type: 'text' })

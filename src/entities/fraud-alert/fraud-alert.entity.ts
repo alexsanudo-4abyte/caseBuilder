@@ -23,7 +23,7 @@ export class FraudAlertEntity extends BaseEntity {
   @Column({ nullable: true, type: 'text' })
   evidence: string;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   ai_confidence: number;
 
   @Column({ nullable: true })

@@ -35,7 +35,7 @@ export class MedicalRecordEntity extends BaseEntity {
   @Column({ nullable: true })
   records_end_date: string;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   severity_score: number;
 
   @Column({ nullable: true })

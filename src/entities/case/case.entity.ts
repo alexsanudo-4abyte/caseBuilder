@@ -53,22 +53,22 @@ export class CaseEntity extends BaseEntity {
   @Column({ nullable: true })
   assigned_attorney: string;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   estimated_value_low: number;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   estimated_value_high: number;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   case_strength_score: number;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   credibility_score: number;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   settlement_probability: number;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   fraud_score: number;
 
   @Column({ nullable: true, type: 'text' })

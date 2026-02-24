@@ -21,7 +21,7 @@ export class TortCampaignEntity extends BaseEntity {
   @Column({ nullable: true, type: 'text' })
   mdl_info: string;
 
-  @Column({ nullable: true, type: 'decimal' })
+  @Column({ nullable: true, type: 'float' })
   estimated_avg_settlement: number;
 
   @Column({ nullable: true, type: 'text' })
