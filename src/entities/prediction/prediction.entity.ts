@@ -1,8 +1,13 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../shared/base.entity';
+import { CaseEntity } from '../case/case.entity';
 
 @Entity('predictions')
 export class PredictionEntity extends BaseEntity {
+  @ManyToOne(() => CaseEntity, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'case_id' })
+  case: CaseEntity;
+
   @Column({ nullable: true })
   case_id: string;
 

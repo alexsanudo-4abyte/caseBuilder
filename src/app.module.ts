@@ -16,6 +16,7 @@ import { CommunicationModule } from './entities/communication/communication.modu
 import { FinancialRecordModule } from './entities/financial-record/financial-record.module';
 import { PredictionModule } from './entities/prediction/prediction.module';
 import { IntakeSubmissionModule } from './entities/intake-submission/intake-submission.module';
+import { ClaimantModule } from './entities/claimant/claimant.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { IntakeSubmissionModule } from './entities/intake-submission/intake-subm
     FinancialRecordModule,
     PredictionModule,
     IntakeSubmissionModule,
+    ClaimantModule,
   ],
   providers: [
     {

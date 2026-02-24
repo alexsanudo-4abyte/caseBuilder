@@ -1,25 +1,33 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../shared/base.entity';
+import { ClaimantEntity } from '../claimant/claimant.entity';
+import { TortCampaignEntity } from '../tort-campaign/tort-campaign.entity';
 
 @Entity('intake_submissions')
 export class IntakeSubmissionEntity extends BaseEntity {
-  @Column({ nullable: true })
-  conversation_id: string;
+  @ManyToOne(() => ClaimantEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'claimant_id' })
+  claimant: ClaimantEntity;
 
   @Column({ nullable: true })
-  full_name: string;
+  claimant_id: string;
+
+  @ManyToOne(() => TortCampaignEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'tort_campaign_id' })
+  tort_campaign: TortCampaignEntity;
 
   @Column({ nullable: true })
-  email: string;
+  tort_campaign_id: string;
+
+  // Populated after staff creates a case from this submission
+  @Column({ nullable: true })
+  case_id: string;
+
+  @Column({ nullable: true, type: 'jsonb' })
+  raw_payload: Record<string, any>;
 
   @Column({ nullable: true })
-  phone: string;
-
-  @Column({ nullable: true })
-  address: string;
-
-  @Column({ nullable: true })
-  date_of_birth: string;
+  intake_channel: string; // web_form|partner_api|phone
 
   @Column({ nullable: true, type: 'text' })
   ai_chat_summary: string;

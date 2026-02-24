@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { dataSourceOptions } from '../src/config/typeorm.config';
 import { UserEntity } from '../src/users/user.entity';
+import { ClaimantEntity } from '../src/entities/claimant/claimant.entity';
 import { CaseEntity } from '../src/entities/case/case.entity';
 import { TaskEntity } from '../src/entities/task/task.entity';
 import { FraudAlertEntity } from '../src/entities/fraud-alert/fraud-alert.entity';
@@ -20,7 +21,7 @@ async function seed() {
   console.log('Connected to database');
 
   // Clear tables in dependency order
-  await ds.query('TRUNCATE TABLE predictions, communications, financial_records, intake_submissions, fraud_alerts, medical_records, documents, tasks, cases, tort_campaigns, users RESTART IDENTITY CASCADE');
+  await ds.query('TRUNCATE TABLE predictions, communications, financial_records, intake_submissions, fraud_alerts, medical_records, documents, tasks, cases, claimants, tort_campaigns, users RESTART IDENTITY CASCADE');
   console.log('Cleared existing data');
 
   // ─── Users ───────────────────────────────────────────────────────────────
@@ -61,18 +62,75 @@ async function seed() {
     qualifying_criteria: 'Active duty military 2003-2015; documented hearing loss or tinnitus.',
   });
 
+  // ─── Claimants ────────────────────────────────────────────────────────────
+  const claimant1 = await ds.getRepository(ClaimantEntity).save({
+    full_name: 'Maria Gonzalez',
+    email: 'mgonzalez@email.com',
+    phone: '(713) 555-2341',
+    address: '456 Oak Ave, Houston, TX 77002',
+    date_of_birth: '1968-03-12',
+    intake_channel: 'tv_ad',
+    consent_given: true,
+    consent_timestamp: '2024-01-10T10:00:00Z',
+    consent_version: 'v1.0',
+  });
+
+  const claimant2 = await ds.getRepository(ClaimantEntity).save({
+    full_name: 'Robert Chen',
+    email: 'rchen@email.com',
+    phone: '(404) 555-8823',
+    address: '1209 Peachtree St NE, Atlanta, GA 30309',
+    date_of_birth: '1975-09-22',
+    intake_channel: 'referral',
+    consent_given: true,
+    consent_timestamp: '2024-02-05T09:30:00Z',
+    consent_version: 'v1.0',
+  });
+
+  const claimant3 = await ds.getRepository(ClaimantEntity).save({
+    full_name: 'Linda Thompson',
+    email: 'lthompson@email.com',
+    phone: '(312) 555-4490',
+    address: '800 N Michigan Ave, Chicago, IL 60611',
+    date_of_birth: '1962-06-18',
+    intake_channel: 'web_form',
+    consent_given: true,
+    consent_timestamp: '2024-03-01T14:15:00Z',
+    consent_version: 'v1.0',
+  });
+
+  const claimant4 = await ds.getRepository(ClaimantEntity).save({
+    full_name: 'David Park',
+    email: 'dpark@email.com',
+    phone: '(206) 555-7712',
+    address: '500 Pike St, Seattle, WA 98101',
+    date_of_birth: '1980-12-03',
+    intake_channel: 'referral',
+    consent_given: true,
+    consent_timestamp: '2023-11-15T11:00:00Z',
+    consent_version: 'v1.0',
+  });
+
+  const claimant5 = await ds.getRepository(ClaimantEntity).save({
+    full_name: 'Jennifer Walsh',
+    email: 'jwalsh@email.com',
+    phone: '(617) 555-3356',
+    address: '100 Tremont St, Boston, MA 02108',
+    date_of_birth: '1955-04-07',
+    intake_channel: 'tv_ad',
+    consent_given: true,
+    consent_timestamp: '2023-06-01T08:45:00Z',
+    consent_version: 'v1.0',
+  });
+
   // ─── Cases ────────────────────────────────────────────────────────────────
   const today = new Date().toISOString().split('T')[0];
 
   const case1 = await ds.getRepository(CaseEntity).save({
-    claimant_name: 'Maria Gonzalez',
-    claimant_email: 'mgonzalez@email.com',
-    claimant_phone: '(713) 555-2341',
-    claimant_address: '456 Oak Ave, Houston, TX 77002',
-    claimant_dob: '1968-03-12',
+    claimant_id: claimant1.id,
+    tort_campaign_id: campaign1.id,
     case_number: 'CB-2024-0001',
     case_type: 'mass_tort',
-    tort_campaign: 'Roundup Herbicide MDL',
     status: 'active',
     priority: 'high',
     notes: 'Strong case. Claimant has 8 years of documented Roundup exposure on family farm. NHL diagnosed April 2022.',
@@ -94,14 +152,10 @@ async function seed() {
   });
 
   const case2 = await ds.getRepository(CaseEntity).save({
-    claimant_name: 'Robert Chen',
-    claimant_email: 'rchen@email.com',
-    claimant_phone: '(404) 555-8823',
-    claimant_address: '1209 Peachtree St NE, Atlanta, GA 30309',
-    claimant_dob: '1975-09-22',
+    claimant_id: claimant2.id,
+    tort_campaign_id: campaign2.id,
     case_number: 'CB-2024-0002',
     case_type: 'mass_tort',
-    tort_campaign: '3M Combat Arms Earplugs',
     status: 'active',
     priority: 'medium',
     notes: 'Army veteran, served 2004-2012. Has documented 45dB hearing loss in left ear and chronic tinnitus.',
@@ -123,14 +177,10 @@ async function seed() {
   });
 
   const case3 = await ds.getRepository(CaseEntity).save({
-    claimant_name: 'Linda Thompson',
-    claimant_email: 'lthompson@email.com',
-    claimant_phone: '(312) 555-4490',
-    claimant_address: '800 N Michigan Ave, Chicago, IL 60611',
-    claimant_dob: '1962-06-18',
+    claimant_id: claimant3.id,
+    tort_campaign_id: campaign1.id,
     case_number: 'CB-2024-0003',
     case_type: 'mass_tort',
-    tort_campaign: 'Roundup Herbicide MDL',
     status: 'intake',
     priority: 'medium',
     notes: 'Recent intake. Claims 15-year Roundup exposure as landscaper. Awaiting medical records.',
@@ -152,14 +202,10 @@ async function seed() {
   });
 
   const case4 = await ds.getRepository(CaseEntity).save({
-    claimant_name: 'David Park',
-    claimant_email: 'dpark@email.com',
-    claimant_phone: '(206) 555-7712',
-    claimant_address: '500 Pike St, Seattle, WA 98101',
-    claimant_dob: '1980-12-03',
+    claimant_id: claimant4.id,
+    tort_campaign_id: campaign2.id,
     case_number: 'CB-2024-0004',
     case_type: 'mass_tort',
-    tort_campaign: '3M Combat Arms Earplugs',
     status: 'settlement',
     priority: 'low',
     notes: 'In active settlement negotiations. $52,000 offer on the table.',
@@ -181,14 +227,10 @@ async function seed() {
   });
 
   const case5 = await ds.getRepository(CaseEntity).save({
-    claimant_name: 'Jennifer Walsh',
-    claimant_email: 'jwalsh@email.com',
-    claimant_phone: '(617) 555-3356',
-    claimant_address: '100 Tremont St, Boston, MA 02108',
-    claimant_dob: '1955-04-07',
+    claimant_id: claimant5.id,
+    tort_campaign_id: campaign1.id,
     case_number: 'CB-2024-0005',
     case_type: 'mass_tort',
-    tort_campaign: 'Roundup Herbicide MDL',
     status: 'closed',
     priority: 'low',
     notes: 'Case closed. $145,000 settlement reached and disbursed.',
@@ -264,6 +306,7 @@ async function seed() {
       title: 'Signed Retainer Agreement',
       document_type: 'retainer',
       file_url: `/documents/${c.case_number}/retainer.pdf`,
+      uploaded_at: today,
     });
   }
 
@@ -443,13 +486,45 @@ async function seed() {
   ]);
 
   // ─── Intake Submissions ───────────────────────────────────────────────────
+  // Claimants for intake submissions (not yet converted to cases)
+  const claimant6 = await ds.getRepository(ClaimantEntity).save({
+    full_name: 'Marcus Johnson',
+    email: 'mjohnson@email.com',
+    phone: '(214) 555-6634',
+    address: '3500 Commerce St, Dallas, TX 75226',
+    date_of_birth: '1970-07-14',
+    intake_channel: 'web_form',
+    consent_given: true,
+    consent_timestamp: `${today}T10:00:00Z`,
+    consent_version: 'v1.0',
+  });
+
+  const claimant7 = await ds.getRepository(ClaimantEntity).save({
+    full_name: 'Patricia Nguyen',
+    email: 'pnguyen@email.com',
+    phone: '(503) 555-2291',
+    address: '1200 NW Couch St, Portland, OR 97209',
+    date_of_birth: '1958-11-30',
+    intake_channel: 'web_form',
+    consent_given: true,
+    consent_timestamp: `${today}T09:00:00Z`,
+    consent_version: 'v1.0',
+  });
+
   await ds.getRepository(IntakeSubmissionEntity).save([
     {
-      full_name: 'Marcus Johnson',
-      email: 'mjohnson@email.com',
-      phone: '(214) 555-6634',
-      address: '3500 Commerce St, Dallas, TX 75226',
-      date_of_birth: '1970-07-14',
+      claimant_id: claimant6.id,
+      tort_campaign_id: campaign1.id,
+      intake_channel: 'web_form',
+      raw_payload: {
+        full_name: 'Marcus Johnson',
+        email: 'mjohnson@email.com',
+        phone: '(214) 555-6634',
+        address: '3500 Commerce St, Dallas, TX 75226',
+        date_of_birth: '1970-07-14',
+        injury_description: '6-year Roundup use on residential property, Burkitt lymphoma 2023',
+        submitted_via: 'web_form_v2',
+      },
       ai_chat_summary: 'Claimant reports 6-year Roundup use on residential property. Diagnosed with Burkitt lymphoma in 2023. Seeking legal representation.',
       key_facts: ['6 years Roundup use', 'Burkitt lymphoma diagnosis 2023', 'No prior legal claims'],
       qualification_score: 74,
@@ -458,11 +533,18 @@ async function seed() {
       submitted_date: today,
     },
     {
-      full_name: 'Patricia Nguyen',
-      email: 'pnguyen@email.com',
-      phone: '(503) 555-2291',
-      address: '1200 NW Couch St, Portland, OR 97209',
-      date_of_birth: '1958-11-30',
+      claimant_id: claimant7.id,
+      tort_campaign_id: campaign2.id,
+      intake_channel: 'web_form',
+      raw_payload: {
+        full_name: 'Patricia Nguyen',
+        email: 'pnguyen@email.com',
+        phone: '(503) 555-2291',
+        address: '1200 NW Couch St, Portland, OR 97209',
+        date_of_birth: '1958-11-30',
+        injury_description: 'Army veteran 2001-2007, bilateral tinnitus and moderate hearing loss 2022',
+        submitted_via: 'web_form_v2',
+      },
       ai_chat_summary: 'Army veteran 2001-2007, reports using 3M combat earplugs during service. Has bilateral tinnitus and moderate hearing loss diagnosed in 2022.',
       key_facts: ['Military service 2001-2007', 'Bilateral tinnitus', 'Moderate hearing loss 2022 diagnosis', 'No VA claim filed'],
       qualification_score: 69,

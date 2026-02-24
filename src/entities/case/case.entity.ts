@@ -1,31 +1,33 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../shared/base.entity';
+import { ClaimantEntity } from '../claimant/claimant.entity';
+import { TortCampaignEntity } from '../tort-campaign/tort-campaign.entity';
 
 @Entity('cases')
 export class CaseEntity extends BaseEntity {
-  @Column({ nullable: true })
-  claimant_name: string;
+  @ManyToOne(() => ClaimantEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'claimant_id' })
+  claimant: ClaimantEntity;
 
   @Column({ nullable: true })
-  claimant_email: string;
+  claimant_id: string;
+
+  @ManyToOne(() => TortCampaignEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'tort_campaign_id' })
+  tort_campaign: TortCampaignEntity;
 
   @Column({ nullable: true })
-  claimant_phone: string;
+  tort_campaign_id: string;
 
+  // Tracks which intake submission originated this case
   @Column({ nullable: true })
-  claimant_address: string;
-
-  @Column({ nullable: true })
-  claimant_dob: string;
+  intake_submission_id: string;
 
   @Column({ nullable: true })
   case_number: string;
 
   @Column({ nullable: true })
   case_type: string;
-
-  @Column({ nullable: true })
-  tort_campaign: string;
 
   @Column({ nullable: true, default: 'intake' })
   status: string;
