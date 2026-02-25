@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
@@ -60,17 +60,17 @@ export default function Communications() {
   const { data: communications = [], isLoading } = useQuery({
     queryKey: ['communications', channelFilter],
     queryFn: () => channelFilter === 'all'
-      ? base44.entities.Communication.list('-created_date', 100)
-      : base44.entities.Communication.filter({ channel: channelFilter }, '-created_date', 100),
+      ? apiClient.entities.Communication.list('-created_date', 100)
+      : apiClient.entities.Communication.filter({ channel: channelFilter }, '-created_date', 100),
   });
 
   const { data: cases = [] } = useQuery({
     queryKey: ['casesForComms'],
-    queryFn: () => base44.entities.Case.list('-created_date', 200),
+    queryFn: () => apiClient.entities.Case.list('-created_date', 200),
   });
 
   const createCommMutation = useMutation({
-    mutationFn: (data) => base44.entities.Communication.create(data),
+    mutationFn: (data) => apiClient.entities.Communication.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['communications'] });
       setNewMessageOpen(false);

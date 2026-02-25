@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -38,7 +38,7 @@ export default function Dashboard() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const userData = await base44.auth.me();
+        const userData = await apiClient.auth.me();
         setUser(userData);
       } catch (e) {
         console.log('User not logged in');
@@ -49,17 +49,17 @@ export default function Dashboard() {
 
   const { data: cases = [], isLoading: casesLoading, refetch: refetchCases } = useQuery({
     queryKey: ['cases'],
-    queryFn: () => base44.entities.Case.list('-created_date', 100),
+    queryFn: () => apiClient.entities.Case.list('-created_date', 100),
   });
 
   const { data: fraudAlerts = [] } = useQuery({
     queryKey: ['fraudAlerts'],
-    queryFn: () => base44.entities.FraudAlert.filter({ status: 'new' }, '-created_date', 10),
+    queryFn: () => apiClient.entities.FraudAlert.filter({ status: 'new' }, '-created_date', 10),
   });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.filter({ status: 'pending' }, '-created_date', 10),
+    queryFn: () => apiClient.entities.Task.filter({ status: 'pending' }, '-created_date', 10),
   });
 
   // Calculate metrics

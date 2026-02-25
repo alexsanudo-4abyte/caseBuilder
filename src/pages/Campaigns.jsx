@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,16 +61,16 @@ export default function Campaigns() {
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['campaigns'],
-    queryFn: () => base44.entities.TortCampaign.list('-created_date', 50),
+    queryFn: () => apiClient.entities.TortCampaign.list('-created_date', 50),
   });
 
   const { data: cases = [] } = useQuery({
     queryKey: ['casesForCampaigns'],
-    queryFn: () => base44.entities.Case.list('-created_date', 1000),
+    queryFn: () => apiClient.entities.Case.list('-created_date', 1000),
   });
 
   const createCampaignMutation = useMutation({
-    mutationFn: (data) => base44.entities.TortCampaign.create(data),
+    mutationFn: (data) => apiClient.entities.TortCampaign.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
       setNewCampaignOpen(false);

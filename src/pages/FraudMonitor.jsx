@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
@@ -61,17 +61,17 @@ export default function FraudMonitor() {
   const { data: alerts = [], isLoading } = useQuery({
     queryKey: ['fraudAlerts', statusFilter],
     queryFn: () => statusFilter === 'all' 
-      ? base44.entities.FraudAlert.list('-created_date', 100)
-      : base44.entities.FraudAlert.filter({ status: statusFilter }, '-created_date', 100),
+      ? apiClient.entities.FraudAlert.list('-created_date', 100)
+      : apiClient.entities.FraudAlert.filter({ status: statusFilter }, '-created_date', 100),
   });
 
   const { data: cases = [] } = useQuery({
     queryKey: ['casesForFraud'],
-    queryFn: () => base44.entities.Case.list('-created_date', 500),
+    queryFn: () => apiClient.entities.Case.list('-created_date', 500),
   });
 
   const updateAlertMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.FraudAlert.update(id, data),
+    mutationFn: ({ id, data }) => apiClient.entities.FraudAlert.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fraudAlerts'] });
       setSelectedAlert(null);

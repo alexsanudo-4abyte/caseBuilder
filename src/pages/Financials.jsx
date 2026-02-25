@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
@@ -42,12 +42,12 @@ export default function Financials() {
 
   const { data: cases = [] } = useQuery({
     queryKey: ['casesForFinance'],
-    queryFn: () => base44.entities.Case.list('-created_date', 500),
+    queryFn: () => apiClient.entities.Case.list('-created_date', 500),
   });
 
   const { data: financialRecords = [] } = useQuery({
     queryKey: ['financialRecords'],
-    queryFn: () => base44.entities.FinancialRecord.list('-created_date', 500),
+    queryFn: () => apiClient.entities.FinancialRecord.list('-created_date', 500),
   });
 
   // Calculate financial metrics

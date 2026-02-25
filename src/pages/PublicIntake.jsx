@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,7 +38,7 @@ export default function PublicIntake() {
     e.preventDefault();
     
     // Create AI conversation
-    const conv = await base44.agents.createConversation({
+    const conv = await apiClient.agents.createConversation({
       agent_name: 'intake_assistant',
       metadata: {
         name: `Intake - ${formData.full_name}`,
@@ -56,7 +56,7 @@ export default function PublicIntake() {
     
     setIsSending(true);
     try {
-      await base44.agents.addMessage(conversation, {
+      await apiClient.agents.addMessage(conversation, {
         role: 'user',
         content: inputMessage
       });
@@ -71,7 +71,7 @@ export default function PublicIntake() {
   useEffect(() => {
     if (!conversation) return;
 
-    const unsubscribe = base44.agents.subscribeToConversation(conversation.id, (data) => {
+    const unsubscribe = apiClient.agents.subscribeToConversation(conversation.id, (data) => {
       setMessages(data.messages);
     });
 
@@ -82,7 +82,7 @@ export default function PublicIntake() {
     setIsSubmitting(true);
     try {
       // Get AI to analyze the conversation
-      const analysis = await base44.integrations.Core.InvokeLLM({
+      const analysis = await apiClient.integrations.Core.InvokeLLM({
         prompt: `Analyze this intake conversation and extract:
 1. A concise summary (2-3 sentences)
 2. Key facts as a list
@@ -105,7 +105,7 @@ Return as JSON.`,
       });
 
       // Create intake submission
-      await base44.entities.IntakeSubmission.create({
+      await apiClient.entities.IntakeSubmission.create({
         conversation_id: conversation.id,
         full_name: formData.full_name,
         email: formData.email,

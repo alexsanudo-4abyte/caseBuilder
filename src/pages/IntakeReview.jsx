@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,12 +40,12 @@ export default function IntakeReview() {
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ['intake-submissions'],
-    queryFn: () => base44.entities.IntakeSubmission.list('-created_date', 100)
+    queryFn: () => apiClient.entities.IntakeSubmission.list('-created_date', 100)
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status, notes }) => 
-      base44.entities.IntakeSubmission.update(id, {
+      apiClient.entities.IntakeSubmission.update(id, {
         status,
         admin_notes: notes,
         reviewed_by: 'admin@example.com',
@@ -60,7 +60,7 @@ export default function IntakeReview() {
 
   const viewConversation = async (conversationId) => {
     try {
-      const conv = await base44.agents.getConversation(conversationId);
+      const conv = await apiClient.agents.getConversation(conversationId);
       setConversationMessages(conv.messages || []);
       setViewingConversation(true);
     } catch (error) {

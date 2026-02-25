@@ -16,7 +16,7 @@ No test framework is configured.
 
 ## Architecture
 
-React 18 SPA. All pages live in `src/pages/` and are auto-registered as routes by `@base44/vite-plugin` (manifest at `src/pages.config.js` — do not edit manually).
+React 18 SPA. All pages live in `src/pages/` and are auto-registered as routes via the Vite plugin (manifest at `src/pages.config.js` — do not edit manually).
 
 ### Provider Hierarchy
 
@@ -32,12 +32,12 @@ AuthProvider → QueryClientProvider → Router → [/Login standalone | Authent
 
 ### Data Layer
 
-`src/api/base44Client.js` — axios adapter with JWT interceptor. Entity clients support `.list(sort, limit)`, `.filter(queryObj, sort, limit)`, `.get(id)`, `.create(data)`, `.update(id, data)`, `.delete(id)`. React Query wraps these for caching.
+`src/api/apiClient.js` — axios adapter with JWT interceptor. Entity clients support `.list(sort, limit)`, `.filter(queryObj, sort, limit)`, `.get(id)`, `.create(data)`, `.update(id, data)`, `.delete(id)`. React Query wraps these for caching.
 
 ```js
-base44.entities.Case.list('-created_date', 100)       // GET /api/cases?sort=-created_date&limit=100
-base44.entities.Case.filter({ status: 'active' })     // GET /api/cases?status=active
-base44.integrations.Core.InvokeLLM({ prompt, schema }) // POST /api/integrations/core/invoke-llm
+apiClient.entities.Case.list('-created_date', 100)       // GET /api/cases?sort=-created_date&limit=100
+apiClient.entities.Case.filter({ status: 'active' })     // GET /api/cases?status=active
+apiClient.integrations.Core.InvokeLLM({ prompt, schema }) // POST /api/integrations/core/invoke-llm
 ```
 
 JWT stored in `localStorage` under `cb_access_token`.

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -61,36 +61,36 @@ export default function CaseDetail() {
 
   const { data: caseData, isLoading } = useQuery({
     queryKey: ['case', caseId],
-    queryFn: () => base44.entities.Case.filter({ id: caseId }),
+    queryFn: () => apiClient.entities.Case.filter({ id: caseId }),
     enabled: !!caseId,
   });
 
   const { data: documents = [] } = useQuery({
     queryKey: ['documents', caseId],
-    queryFn: () => base44.entities.Document.filter({ case_id: caseId }),
+    queryFn: () => apiClient.entities.Document.filter({ case_id: caseId }),
     enabled: !!caseId,
   });
 
   const { data: medicalRecords = [] } = useQuery({
     queryKey: ['medicalRecords', caseId],
-    queryFn: () => base44.entities.MedicalRecord.filter({ case_id: caseId }),
+    queryFn: () => apiClient.entities.MedicalRecord.filter({ case_id: caseId }),
     enabled: !!caseId,
   });
 
   const { data: fraudAlerts = [] } = useQuery({
     queryKey: ['fraudAlerts', caseId],
-    queryFn: () => base44.entities.FraudAlert.filter({ case_id: caseId }),
+    queryFn: () => apiClient.entities.FraudAlert.filter({ case_id: caseId }),
     enabled: !!caseId,
   });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', caseId],
-    queryFn: () => base44.entities.Task.filter({ case_id: caseId }),
+    queryFn: () => apiClient.entities.Task.filter({ case_id: caseId }),
     enabled: !!caseId,
   });
 
   const updateCaseMutation = useMutation({
-    mutationFn: (data) => base44.entities.Case.update(caseId, data),
+    mutationFn: (data) => apiClient.entities.Case.update(caseId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['case', caseId] });
       setIsEditing(false);

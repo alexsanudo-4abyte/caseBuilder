@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,12 +40,12 @@ export default function Analytics() {
 
   const { data: cases = [] } = useQuery({
     queryKey: ['casesForAnalytics'],
-    queryFn: () => base44.entities.Case.list('-created_date', 1000),
+    queryFn: () => apiClient.entities.Case.list('-created_date', 1000),
   });
 
   const { data: predictions = [] } = useQuery({
     queryKey: ['predictionsForAnalytics'],
-    queryFn: () => base44.entities.Prediction.list('-created_date', 500),
+    queryFn: () => apiClient.entities.Prediction.list('-created_date', 500),
   });
 
   // Calculate metrics

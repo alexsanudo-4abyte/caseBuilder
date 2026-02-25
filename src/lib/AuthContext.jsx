@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 
 const AuthContext = createContext();
 
@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoadingAuth(true);
     setAuthError(null);
     try {
-      const currentUser = await base44.auth.me();
+      const currentUser = await apiClient.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
     } catch (err) {
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   }, [checkAppState]);
 
   const login = async (email, password) => {
-    const loggedInUser = await base44.auth.login(email, password);
+    const loggedInUser = await apiClient.auth.login(email, password);
     setUser(loggedInUser);
     setIsAuthenticated(true);
     setAuthError(null);
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (full_name, email, password) => {
-    const loggedInUser = await base44.auth.register(full_name, email, password);
+    const loggedInUser = await apiClient.auth.register(full_name, email, password);
     setUser(loggedInUser);
     setIsAuthenticated(true);
     setAuthError(null);
@@ -54,14 +54,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
     if (shouldRedirect) {
-      base44.auth.logout();
+      apiClient.auth.logout();
     } else {
       localStorage.removeItem('cb_access_token');
     }
   };
 
   const navigateToLogin = () => {
-    base44.auth.redirectToLogin(window.location.href);
+    apiClient.auth.redirectToLogin(window.location.href);
   };
 
   return (

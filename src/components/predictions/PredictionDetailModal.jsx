@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,7 @@ const predictionTypeLabels = {
 export default function PredictionDetailModal({ prediction, open, onOpenChange, onViewCase }) {
   const { data: caseData } = useQuery({
     queryKey: ['case', prediction?.case_id],
-    queryFn: () => base44.entities.Case.filter({ id: prediction?.case_id }),
+    queryFn: () => apiClient.entities.Case.filter({ id: prediction?.case_id }),
     enabled: !!prediction?.case_id && open,
   });
 

@@ -120,19 +120,19 @@ export const integrations = {
 
 export const agents = {
   createConversation() {
-    console.warn('[base44] agents.createConversation not yet implemented');
+    console.warn('[apiClient] agents.createConversation not yet implemented');
     return Promise.resolve({ id: crypto.randomUUID(), messages: [] });
   },
   addMessage() {
-    console.warn('[base44] agents.addMessage not yet implemented');
+    console.warn('[apiClient] agents.addMessage not yet implemented');
     return Promise.resolve();
   },
   subscribeToConversation() {
-    console.warn('[base44] agents.subscribeToConversation not yet implemented');
+    console.warn('[apiClient] agents.subscribeToConversation not yet implemented');
     return () => {};
   },
   getConversation() {
-    console.warn('[base44] agents.getConversation not yet implemented');
+    console.warn('[apiClient] agents.getConversation not yet implemented');
     return Promise.resolve(null);
   },
 };
@@ -143,9 +143,9 @@ export const appLogs = {
   logUserInApp: () => Promise.resolve(),
 };
 
-// ─── Exported base44 object ───────────────────────────────────────────────────
+// ─── Exported apiClient object ────────────────────────────────────────────────
 
-export const base44 = {
+export const apiClient = {
   entities: Object.fromEntries(
     Object.entries(ENTITY_SLUGS).map(([name, slug]) => [name, buildEntityClient(slug)]),
   ),
@@ -155,4 +155,4 @@ export const base44 = {
   appLogs,
 };
 
-export default base44;
+export default apiClient;

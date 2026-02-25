@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import {
   LayoutDashboard,
   FileText,
@@ -57,7 +57,7 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const userData = await base44.auth.me();
+        const userData = await apiClient.auth.me();
         setUser(userData);
         setProfileForm({ full_name: userData.full_name, password: '' });
       } catch (e) {
@@ -74,7 +74,7 @@ export default function Layout({ children, currentPageName }) {
     try {
       const updates = { full_name: profileForm.full_name };
       if (profileForm.password) updates.password = profileForm.password;
-      const updated = await base44.auth.updateProfile(updates);
+      const updated = await apiClient.auth.updateProfile(updates);
       setUser(updated);
       setProfileForm({ full_name: updated.full_name, password: '' });
       setProfileOpen(false);
@@ -99,7 +99,7 @@ export default function Layout({ children, currentPageName }) {
   ];
 
   const handleLogout = async () => {
-    await base44.auth.logout();
+    await apiClient.auth.logout();
   };
 
   return (

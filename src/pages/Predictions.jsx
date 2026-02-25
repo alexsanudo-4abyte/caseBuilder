@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import PredictionDetailModal from '../components/predictions/PredictionDetailModal';
@@ -51,7 +51,7 @@ export default function Predictions() {
 
   const { data: predictions = [], isLoading } = useQuery({
     queryKey: ['predictions', predictionType],
-    queryFn: () => base44.entities.Prediction.filter(
+    queryFn: () => apiClient.entities.Prediction.filter(
       { prediction_type: predictionType, is_current: true },
       '-created_date',
       50
@@ -60,7 +60,7 @@ export default function Predictions() {
 
   const { data: cases = [] } = useQuery({
     queryKey: ['casesForPredictions'],
-    queryFn: () => base44.entities.Case.filter(
+    queryFn: () => apiClient.entities.Case.filter(
       { status: 'active' },
       '-created_date',
       100
@@ -68,7 +68,7 @@ export default function Predictions() {
   });
 
   const createPredictionMutation = useMutation({
-    mutationFn: (data) => base44.entities.Prediction.create(data),
+    mutationFn: (data) => apiClient.entities.Prediction.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['predictions'] });
     },
@@ -79,7 +79,7 @@ export default function Predictions() {
     
     for (const caseItem of cases.slice(0, 5)) {
       try {
-        const response = await base44.integrations.Core.InvokeLLM({
+        const response = await apiClient.integrations.Core.InvokeLLM({
           prompt: `Generate a ${predictionType.replace(/_/g, ' ')} prediction for this legal case:
 
 Case Type: ${caseItem.case_type}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
@@ -70,17 +70,17 @@ export default function MedicalIntel() {
   const { data: medicalRecords = [], isLoading } = useQuery({
     queryKey: ['medicalRecords', statusFilter],
     queryFn: () => statusFilter === 'all'
-      ? base44.entities.MedicalRecord.list('-created_date', 100)
-      : base44.entities.MedicalRecord.filter({ request_status: statusFilter }, '-created_date', 100),
+      ? apiClient.entities.MedicalRecord.list('-created_date', 100)
+      : apiClient.entities.MedicalRecord.filter({ request_status: statusFilter }, '-created_date', 100),
   });
 
   const { data: cases = [] } = useQuery({
     queryKey: ['casesForMedical'],
-    queryFn: () => base44.entities.Case.list('-created_date', 200),
+    queryFn: () => apiClient.entities.Case.list('-created_date', 200),
   });
 
   const createRecordMutation = useMutation({
-    mutationFn: (data) => base44.entities.MedicalRecord.create(data),
+    mutationFn: (data) => apiClient.entities.MedicalRecord.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medicalRecords'] });
       setNewRecordOpen(false);
@@ -95,7 +95,7 @@ export default function MedicalIntel() {
   });
 
   const updateRecordMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.MedicalRecord.update(id, data),
+    mutationFn: ({ id, data }) => apiClient.entities.MedicalRecord.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medicalRecords'] });
     },
@@ -106,7 +106,7 @@ export default function MedicalIntel() {
     setSelectedRecord(record);
 
     try {
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await apiClient.integrations.Core.InvokeLLM({
         prompt: `Analyze this medical record request and generate a comprehensive medical summary. 
         
 Provider: ${record.provider_name}

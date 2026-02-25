@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { apiClient } from '@/api/apiClient';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
@@ -63,16 +63,16 @@ export default function IntakeHub() {
 
   const { data: campaigns = [] } = useQuery({
     queryKey: ['campaigns'],
-    queryFn: () => base44.entities.TortCampaign.filter({ status: 'active' }),
+    queryFn: () => apiClient.entities.TortCampaign.filter({ status: 'active' }),
   });
 
   const { data: recentIntakes = [] } = useQuery({
     queryKey: ['recentIntakes'],
-    queryFn: () => base44.entities.Case.filter({ status: 'intake' }, '-created_date', 10),
+    queryFn: () => apiClient.entities.Case.filter({ status: 'intake' }, '-created_date', 10),
   });
 
   const createCaseMutation = useMutation({
-    mutationFn: (data) => base44.entities.Case.create(data),
+    mutationFn: (data) => apiClient.entities.Case.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cases'] });
       queryClient.invalidateQueries({ queryKey: ['recentIntakes'] });
@@ -107,7 +107,7 @@ export default function IntakeHub() {
     setAnalyzing(true);
     
     try {
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await apiClient.integrations.Core.InvokeLLM({
         prompt: `Analyze this legal intake for case qualification and fraud risk. Be thorough but conservative.
 
 Claimant Information:
