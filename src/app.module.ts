@@ -28,6 +28,12 @@ import { ClaimantModule } from './entities/claimant/claimant.module';
         url: config.get<string>('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
+        ssl: { rejectUnauthorized: false },
+        extra: {
+          max: 1,
+          idleTimeoutMillis: 10000,
+          connectionTimeoutMillis: 5000,
+        },
       }),
     }),
     AuthModule,
