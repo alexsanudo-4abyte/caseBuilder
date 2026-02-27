@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
@@ -19,6 +20,7 @@ import { IntakeSubmissionModule } from './entities/intake-submission/intake-subm
 import { ClaimantModule } from './entities/claimant/claimant.module';
 
 @Module({
+  controllers: [AppController],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
@@ -28,7 +30,7 @@ import { ClaimantModule } from './entities/claimant/claimant.module';
         url: config.get<string>('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
-        ssl: config.get('DATABASE_URL')?.includes('sslmode=require') || config.get('NODE_ENV') === 'production' ? { rejectUnauthorized: false } : false,
+        ssl: config.get('DATABASE_URL')?.includes('localhost') || config.get('DATABASE_URL')?.includes('127.0.0.1') ? false : { rejectUnauthorized: false },
         extra: {
           max: 1,
           idleTimeoutMillis: 10000,
