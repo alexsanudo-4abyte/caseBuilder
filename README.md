@@ -121,9 +121,9 @@ The app is available at `http://localhost:5173`.
 ### Architecture overview
 
 - **Framework**: React 18 with Vite 6
-- **Routing**: Pages in `src/pages/` are auto-registered as routes by `@base44/vite-plugin`. The route manifest is `src/pages.config.js` — do not edit it manually.
+- **Routing**: Pages in `src/pages/` are auto-registered as routes by `vite-plugin`. The route manifest is `src/pages.config.js` — do not edit it manually.
 - **Auth flow**: `AuthContext.jsx` calls `GET /api/auth/me` on mount. A 401 sets `authError.type = 'auth_required'` and redirects to `/Login`. The login page supports both sign-in and sign-up.
-- **Data layer**: `src/api/base44Client.js` is an axios adapter with a JWT interceptor. Entity clients expose `.list()`, `.filter()`, `.get()`, `.create()`, `.update()`, `.delete()`. These are wrapped in React Query for caching.
+- **Data layer**: `src/api/apiClient.js` is an axios adapter with a JWT interceptor. Entity clients expose `.list()`, `.filter()`, `.get()`, `.create()`, `.update()`, `.delete()`. These are wrapped in React Query for caching.
 - **JWT storage**: `localStorage` key `cb_access_token`.
 - **UI**: Tailwind CSS + Shadcn/UI (New York style). Components live in `src/components/ui/`.
 
