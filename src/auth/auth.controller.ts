@@ -1,6 +1,9 @@
 import { Body, Controller, Get, Patch, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -8,14 +11,14 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  async register(@Body() body: { full_name: string; email: string; password: string }) {
-    return this.authService.register(body.full_name, body.email, body.password);
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto.full_name, dto.email, dto.password);
   }
 
   @Public()
   @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
-    const user = await this.authService.validateUser(body.email, body.password);
+  async login(@Body() dto: LoginDto) {
+    const user = await this.authService.validateUser(dto.email, dto.password);
     return this.authService.login(user);
   }
 
@@ -25,8 +28,8 @@ export class AuthController {
   }
 
   @Patch('profile')
-  updateProfile(@Req() req: any, @Body() body: { full_name?: string; password?: string }) {
-    return this.authService.updateProfile(req.user.userId, body);
+  updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.userId, dto);
   }
 
   @Public()

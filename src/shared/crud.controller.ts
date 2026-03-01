@@ -11,7 +11,7 @@ import {
 import { CrudService } from './crud.service';
 
 export abstract class CrudController<T extends { id: string }> {
-  constructor(private readonly service: CrudService<T>) {}
+  constructor(protected readonly service: CrudService<T>) {}
 
   @Get()
   findAll(@Query() query: Record<string, string>) {
