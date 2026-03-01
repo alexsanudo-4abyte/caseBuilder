@@ -3,7 +3,18 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
+function validateEnv() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET environment variable is not set');
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction && (secret === 'casebuilder-jwt-secret-dev' || secret === 'dev-secret')) {
+    throw new Error('JWT_SECRET is still set to a development value — set a strong secret in production');
+  }
+}
+
 async function bootstrap() {
+  validateEnv();
+
   const app = await NestFactory.create(AppModule);
 
   app.use(helmet());

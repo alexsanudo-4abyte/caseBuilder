@@ -35,7 +35,7 @@ import { ClaimantModule } from './entities/claimant/claimant.module';
         url: config.get<string>('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
-        ssl: config.get('DATABASE_URL')?.includes('localhost') || config.get('DATABASE_URL')?.includes('127.0.0.1') ? false : { rejectUnauthorized: false },
+        ssl: config.get('DATABASE_URL')?.includes('localhost') || config.get('DATABASE_URL')?.includes('127.0.0.1') ? false : { rejectUnauthorized: true },
         extra: {
           max: 1,
           idleTimeoutMillis: 10000,
