@@ -1,6 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../shared/base.entity';
 import { CaseEntity } from '../case/case.entity';
+import { encryptedJson, encryptedString } from '../../shared/transformers';
 
 @Entity('medical_records')
 export class MedicalRecordEntity extends BaseEntity {
@@ -44,16 +45,16 @@ export class MedicalRecordEntity extends BaseEntity {
   @Column({ nullable: true, default: 'pending' })
   ai_analysis_status: string;
 
-  @Column({ nullable: true, type: 'text' })
+  @Column({ nullable: true, type: 'text', transformer: encryptedString })
   ai_medical_summary: string;
 
-  @Column({ nullable: true, type: 'jsonb' })
+  @Column({ nullable: true, type: 'text', transformer: encryptedJson })
   diagnoses_extracted: string[];
 
-  @Column({ nullable: true, type: 'jsonb' })
+  @Column({ nullable: true, type: 'text', transformer: encryptedJson })
   procedures_extracted: string[];
 
-  @Column({ nullable: true, type: 'jsonb' })
+  @Column({ nullable: true, type: 'text', transformer: encryptedJson })
   medications_extracted: string[];
 
   @Column({ nullable: true, type: 'jsonb' })

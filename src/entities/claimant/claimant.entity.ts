@@ -1,21 +1,22 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '../../shared/base.entity';
+import { encryptedString } from '../../shared/transformers';
 
 @Entity('claimants')
 export class ClaimantEntity extends BaseEntity {
-  @Column({ nullable: true })
+  @Column({ nullable: true, transformer: encryptedString })
   full_name: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, transformer: encryptedString })
   email: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, transformer: encryptedString })
   phone: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, transformer: encryptedString })
   address: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, transformer: encryptedString })
   date_of_birth: string;
 
   @Column({ nullable: true })

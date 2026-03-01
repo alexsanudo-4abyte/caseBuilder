@@ -6,6 +6,11 @@ import { AppModule } from './app.module';
 function validateEnv() {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error('JWT_SECRET environment variable is not set');
+
+  const encryptionKey = process.env.ENCRYPTION_KEY;
+  if (!encryptionKey) throw new Error('ENCRYPTION_KEY environment variable is not set');
+  if (encryptionKey.length !== 64) throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+
   const isProduction = process.env.NODE_ENV === 'production';
   if (isProduction && (secret === 'casebuilder-jwt-secret-dev' || secret === 'dev-secret')) {
     throw new Error('JWT_SECRET is still set to a development value — set a strong secret in production');
