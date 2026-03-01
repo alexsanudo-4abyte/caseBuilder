@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
+import { AuditModule } from './audit/audit.module';
+import { AuditInterceptor } from './audit/audit.interceptor';
+import { AuditLogService } from './audit/audit-log.service';
 import { UsersModule } from './users/users.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { CaseModule } from './entities/case/case.module';
@@ -39,6 +42,7 @@ import { ClaimantModule } from './entities/claimant/claimant.module';
         },
       }),
     }),
+    AuditModule,
     AuthModule,
     UsersModule,
     IntegrationsModule,
@@ -62,6 +66,11 @@ import { ClaimantModule } from './entities/claimant/claimant.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useFactory: (auditLogService: AuditLogService) => new AuditInterceptor(auditLogService),
+      inject: [AuditLogService],
     },
   ],
 })
