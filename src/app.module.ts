@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { RolesGuard } from './auth/roles.guard';
 import { UsersModule } from './users/users.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { CaseModule } from './entities/case/case.module';
@@ -57,6 +58,10 @@ import { ClaimantModule } from './entities/claimant/claimant.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })
