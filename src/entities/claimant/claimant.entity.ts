@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '../../shared/base.entity';
 import { encryptedString } from '../../shared/transformers';
 
@@ -30,4 +30,12 @@ export class ClaimantEntity extends BaseEntity {
 
   @Column({ nullable: true })
   consent_version: string; // e.g. "v1.2"
+
+  @Index()
+  @Column({ nullable: true })
+  email_hash: string;
+
+  @Index()
+  @Column({ nullable: true })
+  phone_hash: string;
 }

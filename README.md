@@ -81,6 +81,56 @@ The API is available at `http://localhost:3000/api`. TypeORM runs with `synchron
   DELETE /api/{slug}/:id
   ```
 - **LLM**: `POST /api/integrations/core/invoke-llm` calls Anthropic Claude.
+- **Public intake**: `POST /api/intake/submit` — unauthenticated claimant self-submission (see [Intake Gateway](#intake-gateway) below).
+
+---
+
+### Intake Gateway
+
+#### `POST /api/intake/submit`
+
+Public endpoint — no JWT required. Accepts claimant self-submissions, de-duplicates by email, and creates an `IntakeSubmission` for staff review.
+
+**Rate limit:** 5 requests per 15 minutes per IP.
+
+**Request body:**
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `full_name` | string | yes | max 100 chars |
+| `email` | string | yes | valid email |
+| `consent_given` | boolean | yes | must be `true` — any other value returns 400 |
+| `consent_version` | string | yes | e.g. `"v1"` |
+| `phone` | string | no | max 30 chars |
+| `address` | string | no | max 255 chars |
+| `date_of_birth` | string | no | free-form |
+| `tort_campaign_id` | UUID | no | ties submission to a litigation campaign |
+| `intake_channel` | `"web_form"` \| `"partner_api"` \| `"phone"` | no | defaults to `"web_form"` |
+| `raw_payload` | object | no | free-form fields stored as immutable JSONB snapshot |
+
+**Response `201`:**
+
+```json
+{
+  "submission_id": "fe61461c-e3b4-4d5f-8377-34d8c82d2dc3",
+  "status": "received",
+  "message": "Your submission has been received and will be reviewed by our team."
+}
+```
+
+**Error responses:**
+
+| Code | Cause |
+|------|-------|
+| `400` | Validation failure (missing required field, `consent_given !== true`, invalid email, etc.) |
+| `429` | Rate limit exceeded |
+
+**Side effects:**
+1. Looks up claimant by HMAC of email (PII is encrypted at rest, so exact-match queries use a deterministic hash). If not found, creates a new `Claimant`. If found, updates consent fields.
+2. Creates an `IntakeSubmission` with `status = "pending_review"`.
+3. Staff triage via `GET /api/intake-submissions` (requires JWT + staff role).
+
+---
 
 ### Useful commands
 

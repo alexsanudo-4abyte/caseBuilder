@@ -23,6 +23,7 @@ import { FinancialRecordModule } from './entities/financial-record/financial-rec
 import { PredictionModule } from './entities/prediction/prediction.module';
 import { IntakeSubmissionModule } from './entities/intake-submission/intake-submission.module';
 import { ClaimantModule } from './entities/claimant/claimant.module';
+import { IntakeGatewayModule } from './intake-gateway/intake-gateway.module';
 
 @Module({
   controllers: [AppController],
@@ -65,6 +66,7 @@ import { ClaimantModule } from './entities/claimant/claimant.module';
     PredictionModule,
     IntakeSubmissionModule,
     ClaimantModule,
+    IntakeGatewayModule,
   ],
   providers: [
     {
