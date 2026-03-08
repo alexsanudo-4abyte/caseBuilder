@@ -12,6 +12,9 @@ export class FraudAlertEntity extends BaseEntity {
   case_id: string;
 
   @Column({ nullable: true })
+  intake_submission_id: string;
+
+  @Column({ nullable: true })
   alert_type: string;
 
   @Column({ nullable: true })

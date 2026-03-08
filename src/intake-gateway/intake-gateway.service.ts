@@ -5,6 +5,7 @@ import { ClaimantEntity } from '../entities/claimant/claimant.entity';
 import { IntakeSubmissionEntity } from '../entities/intake-submission/intake-submission.entity';
 import { hmac } from '../shared/crypto';
 import { PublicIntakeDto } from './dto/public-intake.dto';
+import { FraudAnalysisService } from '../fraud-analysis/fraud-analysis.service';
 
 @Injectable()
 export class IntakeGatewayService {
@@ -13,6 +14,7 @@ export class IntakeGatewayService {
     private readonly claimantRepo: Repository<ClaimantEntity>,
     @InjectRepository(IntakeSubmissionEntity)
     private readonly submissionRepo: Repository<IntakeSubmissionEntity>,
+    private readonly fraudAnalysisService: FraudAnalysisService,
   ) {}
 
   async submit(dto: PublicIntakeDto): Promise<{ submission_id: string; status: string; message: string }> {
@@ -21,6 +23,7 @@ export class IntakeGatewayService {
 
     // De-duplicate by email_hash
     let claimant = await this.claimantRepo.findOne({ where: { email_hash } });
+    const isRepeat = !!claimant;
 
     if (!claimant) {
       claimant = this.claimantRepo.create({
@@ -55,6 +58,9 @@ export class IntakeGatewayService {
       submitted_date: new Date().toISOString(),
     });
     await this.submissionRepo.save(submission);
+
+    this.fraudAnalysisService.analyze(submission, claimant, isRepeat)
+      .catch(err => console.error('[FraudAnalysis] Failed:', err));
 
     return {
       submission_id: submission.id,

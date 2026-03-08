@@ -24,6 +24,8 @@ import { PredictionModule } from './entities/prediction/prediction.module';
 import { IntakeSubmissionModule } from './entities/intake-submission/intake-submission.module';
 import { ClaimantModule } from './entities/claimant/claimant.module';
 import { IntakeGatewayModule } from './intake-gateway/intake-gateway.module';
+import { AiJobModule } from './ai-jobs/ai-job.module';
+import { FraudAnalysisModule } from './fraud-analysis/fraud-analysis.module';
 
 @Module({
   controllers: [AppController],
@@ -67,6 +69,8 @@ import { IntakeGatewayModule } from './intake-gateway/intake-gateway.module';
     IntakeSubmissionModule,
     ClaimantModule,
     IntakeGatewayModule,
+    AiJobModule,
+    FraudAnalysisModule,
   ],
   providers: [
     {
