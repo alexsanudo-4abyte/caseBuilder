@@ -27,6 +27,14 @@ export default function SettingsPage() {
   const [user, setUser] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const [profile, setProfile] = useState({
+    full_name: '',
+    phone: '',
+    firm_name: '',
+    office_address: '',
+  });
 
   const [settings, setSettings] = useState({
     emailNotifications: true,
@@ -45,6 +53,12 @@ export default function SettingsPage() {
       try {
         const userData = await apiClient.auth.me();
         setUser(userData);
+        setProfile({
+          full_name: userData.full_name || '',
+          phone: userData.phone || '',
+          firm_name: userData.firm_name || '',
+          office_address: userData.office_address || '',
+        });
       } catch (e) {
         console.log('User not logged in');
       }
@@ -52,13 +66,28 @@ export default function SettingsPage() {
     loadUser();
   }, []);
 
+  const validate = () => {
+    const errs = {};
+    if (profile.phone && !/^\+?[\d\s\-().]{7,20}$/.test(profile.phone)) {
+      errs.phone = 'Enter a valid phone number';
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSave = async () => {
+    if (!validate()) return;
     setSaving(true);
-    // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      const updated = await apiClient.auth.updateProfile(profile);
+      setUser(updated);
+    } catch (e) {
+      console.error('Failed to save profile', e);
+    } finally {
+      setSaving(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    }
   };
 
   return (
@@ -106,7 +135,11 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Full Name</Label>
-                    <Input value={user?.full_name || ''} placeholder="John Doe" />
+                    <Input
+                      value={profile.full_name}
+                      onChange={e => setProfile({ ...profile, full_name: e.target.value })}
+                      placeholder="John Doe"
+                    />
                   </div>
                   <div>
                     <Label>Email</Label>
@@ -118,16 +151,33 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <Label>Phone</Label>
-                    <Input placeholder="(555) 123-4567" />
+                    <Input
+                      value={profile.phone}
+                      onChange={e => {
+                        setProfile({ ...profile, phone: e.target.value });
+                        setErrors(prev => ({ ...prev, phone: undefined }));
+                      }}
+                      placeholder="(555) 123-4567"
+                      className={errors.phone ? 'border-red-500' : ''}
+                    />
+                    {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
                   </div>
                 </div>
                 <div>
                   <Label>Firm Name</Label>
-                  <Input placeholder="Law Firm LLC" />
+                  <Input
+                    value={profile.firm_name}
+                    onChange={e => setProfile({ ...profile, firm_name: e.target.value })}
+                    placeholder="Law Firm LLC"
+                  />
                 </div>
                 <div>
                   <Label>Office Address</Label>
-                  <Input placeholder="123 Main St, Suite 100, City, State 12345" />
+                  <Input
+                    value={profile.office_address}
+                    onChange={e => setProfile({ ...profile, office_address: e.target.value })}
+                    placeholder="123 Main St, Suite 100, City, State 12345"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -280,23 +330,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <h4 className="font-medium text-slate-900 mb-2">AI Model Performance</h4>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-emerald-600">94%</p>
-                    <p className="text-xs text-slate-500">Fraud Detection Accuracy</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-blue-600">87%</p>
-                    <p className="text-xs text-slate-500">Settlement Prediction</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-purple-600">91%</p>
-                    <p className="text-xs text-slate-500">Case Qualification</p>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
