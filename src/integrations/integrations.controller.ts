@@ -1,6 +1,9 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { IntegrationsService } from './integrations.service';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../auth/role.enum';
 
+@Roles(Role.ADMIN, Role.ATTORNEY, Role.INTAKE_STAFF, Role.CASE_MANAGER, Role.CLAIMANT)
 @Controller('integrations')
 export class IntegrationsController {
   constructor(private readonly service: IntegrationsService) {}
