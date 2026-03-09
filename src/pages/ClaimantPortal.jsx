@@ -41,6 +41,7 @@ export default function ClaimantPortal() {
   const [inputMessage, setInputMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -92,8 +93,19 @@ ${formData.date_of_birth ? `- Date of Birth: ${formData.date_of_birth}` : ''}
 
 Topics to cover in order: what happened, when it occurred, which product/drug/event was involved, injuries or health effects, medical treatment received. Once all topics are covered, close warmly and let them know they can submit.`;
 
+  const validateForm = () => {
+    const errs = {};
+    if (!formData.phone.trim()) errs.phone = 'Phone number is required';
+    else if (!/^\+?[\d\s\-().]{7,20}$/.test(formData.phone)) errs.phone = 'Enter a valid phone number';
+    if (!formData.address.trim()) errs.address = 'Address is required';
+    if (!formData.date_of_birth) errs.date_of_birth = 'Date of birth is required';
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setIsSending(true);
     try {
       const firstUserMsg = `Hi, I'm ${formData.full_name} and I'd like to find out if I have a case.`;
@@ -136,22 +148,6 @@ Topics to cover in order: what happened, when it occurred, which product/drug/ev
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const analysis = await apiClient.integrations.Core.InvokeLLM({
-        prompt: `Analyze this intake conversation and extract a summary, key facts, a qualification score (0-100), and the case type/category.
-
-Conversation:
-${messages.map(m => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.content}`).join('\n')}`,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            summary: { type: 'string' },
-            key_facts: { type: 'array', items: { type: 'string' } },
-            qualification_score: { type: 'number' },
-            case_type: { type: 'string' },
-          },
-        },
-      });
-
       await apiClient.intake.submit({
         full_name: formData.full_name,
         email: formData.email,
@@ -161,13 +157,7 @@ ${messages.map(m => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.conten
         intake_channel: 'web_form',
         consent_given: true,
         consent_version: '1.0',
-        raw_payload: {
-          ai_chat_summary: analysis.summary,
-          key_facts: analysis.key_facts,
-          qualification_score: analysis.qualification_score,
-          case_type: analysis.case_type,
-          conversation: messages,
-        },
+        conversation: messages,
       });
 
       const subs = await apiClient.auth.mySubmissions();
@@ -330,25 +320,44 @@ ${messages.map(m => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.conten
                       </div>
                     </div>
                     <div>
-                      <Label>Phone</Label>
+                      <Label>Phone *</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input type="tel" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="pl-10" placeholder="(555) 123-4567" />
+                        <Input
+                          type="tel"
+                          value={formData.phone}
+                          onChange={e => { setFormData({ ...formData, phone: e.target.value }); setFormErrors(p => ({ ...p, phone: undefined })); }}
+                          className={`pl-10 ${formErrors.phone ? 'border-red-500' : ''}`}
+                          placeholder="(555) 123-4567"
+                        />
                       </div>
+                      {formErrors.phone && <p className="text-xs text-red-500 mt-1">{formErrors.phone}</p>}
                     </div>
                     <div>
-                      <Label>Address</Label>
+                      <Label>Address *</Label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                        <Textarea value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="pl-10" placeholder="123 Main St, City, State, ZIP" />
+                        <Textarea
+                          value={formData.address}
+                          onChange={e => { setFormData({ ...formData, address: e.target.value }); setFormErrors(p => ({ ...p, address: undefined })); }}
+                          className={`pl-10 ${formErrors.address ? 'border-red-500' : ''}`}
+                          placeholder="123 Main St, City, State, ZIP"
+                        />
                       </div>
+                      {formErrors.address && <p className="text-xs text-red-500 mt-1">{formErrors.address}</p>}
                     </div>
                     <div>
-                      <Label>Date of Birth</Label>
+                      <Label>Date of Birth *</Label>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input type="date" value={formData.date_of_birth} onChange={e => setFormData({ ...formData, date_of_birth: e.target.value })} className="pl-10" />
+                        <Input
+                          type="date"
+                          value={formData.date_of_birth}
+                          onChange={e => { setFormData({ ...formData, date_of_birth: e.target.value }); setFormErrors(p => ({ ...p, date_of_birth: undefined })); }}
+                          className={`pl-10 ${formErrors.date_of_birth ? 'border-red-500' : ''}`}
+                        />
                       </div>
+                      {formErrors.date_of_birth && <p className="text-xs text-red-500 mt-1">{formErrors.date_of_birth}</p>}
                     </div>
                     <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isSending}>
                       {isSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

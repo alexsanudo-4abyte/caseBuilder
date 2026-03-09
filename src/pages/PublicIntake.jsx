@@ -89,22 +89,6 @@ Topics to cover in order: what happened, when it occurred, which product/drug/ev
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const analysis = await apiClient.integrations.Core.InvokeLLM({
-        prompt: `Analyze this intake conversation and extract a summary, key facts, a qualification score (0-100), and the case type/category.
-
-Conversation:
-${messages.map(m => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.content}`).join('\n')}`,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            summary: { type: 'string' },
-            key_facts: { type: 'array', items: { type: 'string' } },
-            qualification_score: { type: 'number' },
-            case_type: { type: 'string' },
-          },
-        },
-      });
-
       await apiClient.intake.submit({
         full_name: formData.full_name,
         email: formData.email,
@@ -114,13 +98,7 @@ ${messages.map(m => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.conten
         intake_channel: 'web_form',
         consent_given: true,
         consent_version: '1.0',
-        raw_payload: {
-          ai_chat_summary: analysis.summary,
-          key_facts: analysis.key_facts,
-          qualification_score: analysis.qualification_score,
-          case_type: analysis.case_type,
-          conversation: messages,
-        },
+        conversation: messages,
       });
 
       setSubmitted(true);
