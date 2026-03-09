@@ -120,8 +120,10 @@ export const auth = {
 
 export const integrations = {
   Core: {
-    InvokeLLM({ prompt, response_json_schema }) {
-      return http.post('/integrations/core/invoke-llm', { prompt, response_json_schema });
+    async InvokeLLM({ prompt, response_json_schema, messages, system }) {
+      const res = await http.post('/integrations/core/invoke-llm', { prompt, response_json_schema, messages, system });
+      // Unwrap { result: text } for plain text responses; JSON responses are returned as-is
+      return response_json_schema ? res : (res?.result ?? res);
     },
   },
 };

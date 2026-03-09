@@ -80,9 +80,8 @@ export default function ClaimantPortal() {
     }
   }, [user]);
 
-  const buildChatPrompt = (history, userMessage) => {
-    const historyText = history.map(m => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.content}`).join('\n');
-    return `You are a compassionate intake assistant for a mass tort law firm. Gather information about a potential claimant's case through friendly conversation. Be concise and ask one question at a time.
+  const getSystemPrompt = () =>
+    `You are a compassionate intake assistant for a mass tort law firm. Gather information about a potential claimant's case through friendly conversation. Be concise and ask one question at a time.
 
 Claimant information already collected:
 - Name: ${formData.full_name}
@@ -91,22 +90,19 @@ ${formData.phone ? `- Phone: ${formData.phone}` : ''}
 ${formData.address ? `- Address: ${formData.address}` : ''}
 ${formData.date_of_birth ? `- Date of Birth: ${formData.date_of_birth}` : ''}
 
-Topics to cover (in order): what happened, when it occurred, which product/drug/event was involved, injuries or health effects, medical treatment received.
-
-${historyText ? `Conversation so far:\n${historyText}\n` : ''}Claimant: ${userMessage}
-
-Respond as the Assistant. Once all topics are covered, close warmly and let them know they can submit.`;
-  };
+Topics to cover in order: what happened, when it occurred, which product/drug/event was involved, injuries or health effects, medical treatment received. Once all topics are covered, close warmly and let them know they can submit.`;
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setIsSending(true);
     try {
+      const firstUserMsg = `Hi, I'm ${formData.full_name} and I'd like to find out if I have a case.`;
       const greeting = await apiClient.integrations.Core.InvokeLLM({
-        prompt: buildChatPrompt([], `Hi, I'm ${formData.full_name} and I'd like to find out if I have a case.`),
+        system: getSystemPrompt(),
+        messages: [{ role: 'user', content: firstUserMsg }],
       });
       setMessages([
-        { role: 'user', content: `Hi, I'm ${formData.full_name} and I'd like to find out if I have a case.` },
+        { role: 'user', content: firstUserMsg },
         { role: 'assistant', content: greeting },
       ]);
       setStep(2);
@@ -126,7 +122,8 @@ Respond as the Assistant. Once all topics are covered, close warmly and let them
     setIsSending(true);
     try {
       const reply = await apiClient.integrations.Core.InvokeLLM({
-        prompt: buildChatPrompt(messages, inputMessage),
+        system: getSystemPrompt(),
+        messages: updated,
       });
       setMessages([...updated, { role: 'assistant', content: reply }]);
     } catch (err) {
