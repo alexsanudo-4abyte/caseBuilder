@@ -50,6 +50,14 @@ export const AuthProvider = ({ children }) => {
     return loggedInUser;
   };
 
+  const registerClaimant = async (full_name, email, password) => {
+    const loggedInUser = await apiClient.auth.registerClaimant(full_name, email, password);
+    setUser(loggedInUser);
+    setIsAuthenticated(true);
+    setAuthError(null);
+    return loggedInUser;
+  };
+
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
@@ -75,6 +83,7 @@ export const AuthProvider = ({ children }) => {
         appPublicSettings: null,
         login,
         register,
+        registerClaimant,
         logout,
         navigateToLogin,
         checkAppState,

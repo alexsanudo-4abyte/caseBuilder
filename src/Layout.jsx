@@ -60,6 +60,9 @@ export default function Layout({ children, currentPageName }) {
         const userData = await apiClient.auth.me();
         setUser(userData);
         setProfileForm({ full_name: userData.full_name, password: '' });
+        if (userData.role === 'claimant') {
+          navigate('/ClaimantPortal', { replace: true });
+        }
       } catch (e) {
         console.log('User not logged in');
       }
@@ -89,7 +92,6 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Command Center', page: 'Dashboard', icon: LayoutDashboard },
     { name: 'Cases', page: 'Cases', icon: FolderOpen },
     { name: 'Intake Hub', page: 'IntakeHub', icon: Users },
-    { name: 'Medical Intel', page: 'MedicalIntel', icon: Activity },
     { name: 'Fraud Monitor', page: 'FraudMonitor', icon: Shield },
     { name: 'AI Predictions', page: 'Predictions', icon: Brain },
     { name: 'Financials', page: 'Financials', icon: DollarSign },
