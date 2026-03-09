@@ -19,6 +19,13 @@ export class AuthController {
 
   @Public()
   @Throttle({ default: { ttl: 60000, limit: 10 } })
+  @Post('register/claimant')
+  async registerClaimant(@Body() dto: RegisterDto) {
+    return this.authService.registerClaimant(dto.full_name, dto.email, dto.password);
+  }
+
+  @Public()
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('login')
   async login(@Body() dto: LoginDto) {
     const user = await this.authService.validateUser(dto.email, dto.password);
@@ -33,6 +40,11 @@ export class AuthController {
   @Patch('profile')
   updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
     return this.authService.updateProfile(req.user.userId, dto);
+  }
+
+  @Get('my-submissions')
+  mySubmissions(@Req() req: any) {
+    return this.authService.mySubmissions(req.user.userId);
   }
 
   @Public()
