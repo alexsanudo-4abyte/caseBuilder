@@ -18,7 +18,6 @@ export default function PublicIntake() {
     address: '',
     date_of_birth: ''
   });
-  const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -34,33 +33,56 @@ export default function PublicIntake() {
     scrollToBottom();
   }, [messages]);
 
+  const buildChatPrompt = (history, userMessage) => {
+    const historyText = history.map(m => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.content}`).join('\n');
+    return `You are a compassionate intake assistant for a mass tort law firm. Your job is to gather information about a potential claimant's case through friendly conversation. Be concise and ask one question at a time.
+
+Claimant information already collected:
+- Name: ${formData.full_name}
+- Email: ${formData.email}
+${formData.phone ? `- Phone: ${formData.phone}` : ''}
+${formData.address ? `- Address: ${formData.address}` : ''}
+${formData.date_of_birth ? `- Date of Birth: ${formData.date_of_birth}` : ''}
+
+Topics to cover (in order): what happened, when it occurred, which product/drug/event was involved, injuries or health effects, medical treatment received.
+
+${historyText ? `Conversation so far:\n${historyText}\n` : ''}Claimant: ${userMessage}
+
+Respond as the Assistant. Once you have covered all topics, close warmly and let them know they can submit.`;
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    
-    // Create AI conversation
-    const conv = await apiClient.agents.createConversation({
-      agent_name: 'intake_assistant',
-      metadata: {
-        name: `Intake - ${formData.full_name}`,
-        description: 'Public intake conversation'
-      }
-    });
-    
-    setConversation(conv);
-    setMessages(conv.messages || []);
-    setStep(2);
+    setIsSending(true);
+    try {
+      const greeting = await apiClient.integrations.Core.InvokeLLM({
+        prompt: buildChatPrompt([], `Hi, I'm ${formData.full_name} and I'd like to find out if I have a case.`),
+      });
+      const initialUserMsg = { role: 'user', content: `Hi, I'm ${formData.full_name} and I'd like to find out if I have a case.` };
+      const initialAssistantMsg = { role: 'assistant', content: greeting };
+      setMessages([initialUserMsg, initialAssistantMsg]);
+      setStep(2);
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || !conversation) return;
-    
+    if (!inputMessage.trim()) return;
+
+    const userMsg = { role: 'user', content: inputMessage };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setInputMessage('');
     setIsSending(true);
+
     try {
-      await apiClient.agents.addMessage(conversation, {
-        role: 'user',
-        content: inputMessage
+      const reply = await apiClient.integrations.Core.InvokeLLM({
+        prompt: buildChatPrompt(messages, inputMessage),
       });
-      setInputMessage('');
+      setMessages([...updatedMessages, { role: 'assistant', content: reply }]);
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
@@ -68,56 +90,41 @@ export default function PublicIntake() {
     }
   };
 
-  useEffect(() => {
-    if (!conversation) return;
-
-    const unsubscribe = apiClient.agents.subscribeToConversation(conversation.id, (data) => {
-      setMessages(data.messages);
-    });
-
-    return () => unsubscribe();
-  }, [conversation]);
-
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Get AI to analyze the conversation
       const analysis = await apiClient.integrations.Core.InvokeLLM({
-        prompt: `Analyze this intake conversation and extract:
-1. A concise summary (2-3 sentences)
-2. Key facts as a list
-3. A qualification score (0-100) based on how strong this case appears
-4. The case type/category
+        prompt: `Analyze this intake conversation and extract a summary, key facts, a qualification score (0-100), and the case type/category.
 
 Conversation:
-${messages.map(m => `${m.role}: ${m.content}`).join('\n')}
-
-Return as JSON.`,
+${messages.map(m => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.content}`).join('\n')}`,
         response_json_schema: {
-          type: "object",
+          type: 'object',
           properties: {
-            summary: { type: "string" },
-            key_facts: { type: "array", items: { type: "string" } },
-            qualification_score: { type: "number" },
-            case_type: { type: "string" }
-          }
-        }
+            summary: { type: 'string' },
+            key_facts: { type: 'array', items: { type: 'string' } },
+            qualification_score: { type: 'number' },
+            case_type: { type: 'string' },
+          },
+        },
       });
 
-      // Create intake submission
-      await apiClient.entities.IntakeSubmission.create({
-        conversation_id: conversation.id,
+      await apiClient.intake.submit({
         full_name: formData.full_name,
         email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        date_of_birth: formData.date_of_birth,
-        ai_chat_summary: analysis.summary,
-        key_facts: analysis.key_facts,
-        qualification_score: analysis.qualification_score,
-        case_type: analysis.case_type,
-        status: 'pending_review',
-        submitted_date: new Date().toISOString()
+        phone: formData.phone || undefined,
+        address: formData.address || undefined,
+        date_of_birth: formData.date_of_birth || undefined,
+        intake_channel: 'web_form',
+        consent_given: true,
+        consent_version: '1.0',
+        raw_payload: {
+          ai_chat_summary: analysis.summary,
+          key_facts: analysis.key_facts,
+          qualification_score: analysis.qualification_score,
+          case_type: analysis.case_type,
+          conversation: messages,
+        },
       });
 
       setSubmitted(true);

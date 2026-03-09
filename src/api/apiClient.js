@@ -91,6 +91,16 @@ export const auth = {
     return response.user;
   },
 
+  async registerClaimant(full_name, email, password) {
+    const response = await http.post('/auth/register/claimant', { full_name, email, password });
+    localStorage.setItem('cb_access_token', response.access_token);
+    return response.user;
+  },
+
+  mySubmissions() {
+    return http.get('/auth/my-submissions');
+  },
+
   updateProfile(data) {
     return http.patch('/auth/profile', data);
   },
@@ -113,6 +123,14 @@ export const integrations = {
     InvokeLLM({ prompt, response_json_schema }) {
       return http.post('/integrations/core/invoke-llm', { prompt, response_json_schema });
     },
+  },
+};
+
+// ─── Public intake gateway ───────────────────────────────────────────────────
+
+export const intake = {
+  submit(data) {
+    return http.post('/intake/submit', data);
   },
 };
 
@@ -151,6 +169,7 @@ export const apiClient = {
   ),
   auth,
   integrations,
+  intake,
   agents,
   appLogs,
 };
