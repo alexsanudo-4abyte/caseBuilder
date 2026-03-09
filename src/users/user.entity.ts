@@ -14,4 +14,13 @@ export class UserEntity extends BaseEntity {
 
   @Column({ default: 'attorney' })
   role: string;
+
+  @Column({ nullable: true })
+  phone: string;
+
+  @Column({ nullable: true })
+  firm_name: string;
+
+  @Column({ nullable: true })
+  office_address: string;
 }
