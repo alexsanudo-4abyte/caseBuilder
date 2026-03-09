@@ -60,9 +60,6 @@ export default function Layout({ children, currentPageName }) {
         const userData = await apiClient.auth.me();
         setUser(userData);
         setProfileForm({ full_name: userData.full_name, password: '' });
-        if (userData.role === 'claimant') {
-          navigate('/ClaimantPortal', { replace: true });
-        }
       } catch (e) {
         console.log('User not logged in');
       }

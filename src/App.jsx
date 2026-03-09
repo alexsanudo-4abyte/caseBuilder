@@ -8,6 +8,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Login from '@/pages/Login';
+import ClaimantPortal from '@/pages/ClaimantPortal';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -74,6 +75,7 @@ function App() {
           <NavigationTracker />
           <Routes>
             <Route path="/Login" element={<Login />} />
+            <Route path="/ClaimantPortal" element={<ClaimantPortal />} />
             <Route path="*" element={<AuthenticatedApp />} />
           </Routes>
         </Router>

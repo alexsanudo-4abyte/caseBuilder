@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiClient } from '@/api/apiClient';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Scale, Send, CheckCircle, Loader2, User, Mail, Phone,
+  Scale, Send, Loader2, User, Mail, Phone,
   MapPin, Calendar, MessageSquare, Clock, FileText, LogOut
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -22,7 +23,8 @@ const STATUS_CONFIG = {
 };
 
 export default function ClaimantPortal() {
-  const { user, logout } = useAuth();
+  const { user, isLoadingAuth, logout } = useAuth();
+  const navigate = useNavigate();
   const [view, setView] = useState('loading'); // 'loading' | 'intake' | 'status'
   const [submissions, setSubmissions] = useState([]);
 
@@ -46,6 +48,11 @@ export default function ClaimantPortal() {
   }, [messages]);
 
   useEffect(() => {
+    if (isLoadingAuth) return;
+    if (!user) {
+      navigate('/Login', { replace: true });
+      return;
+    }
     const checkSubmissions = async () => {
       try {
         const subs = await apiClient.auth.mySubmissions();
@@ -60,7 +67,7 @@ export default function ClaimantPortal() {
       }
     };
     checkSubmissions();
-  }, []);
+  }, [user, isLoadingAuth]);
 
   // Pre-fill name/email from user account
   useEffect(() => {
