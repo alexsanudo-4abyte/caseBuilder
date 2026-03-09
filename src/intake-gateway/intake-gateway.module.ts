@@ -5,9 +5,10 @@ import { IntakeSubmissionEntity } from '../entities/intake-submission/intake-sub
 import { IntakeGatewayController } from './intake-gateway.controller';
 import { IntakeGatewayService } from './intake-gateway.service';
 import { FraudAnalysisModule } from '../fraud-analysis/fraud-analysis.module';
+import { IntegrationsModule } from '../integrations/integrations.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ClaimantEntity, IntakeSubmissionEntity]), FraudAnalysisModule],
+  imports: [TypeOrmModule.forFeature([ClaimantEntity, IntakeSubmissionEntity]), FraudAnalysisModule, IntegrationsModule],
   controllers: [IntakeGatewayController],
   providers: [IntakeGatewayService],
 })

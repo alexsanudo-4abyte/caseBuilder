@@ -6,6 +6,7 @@ import {
   IsUUID,
   IsIn,
   IsObject,
+  IsArray,
   MaxLength,
   Equals,
 } from 'class-validator';
@@ -50,4 +51,8 @@ export class PublicIntakeDto {
   @IsOptional()
   @IsObject()
   raw_payload?: Record<string, any>;
+
+  @IsOptional()
+  @IsArray()
+  conversation?: Array<{ role: string; content: string }>;
 }

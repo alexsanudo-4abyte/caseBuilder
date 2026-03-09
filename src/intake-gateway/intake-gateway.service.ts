@@ -6,6 +6,7 @@ import { IntakeSubmissionEntity } from '../entities/intake-submission/intake-sub
 import { hmac } from '../shared/crypto';
 import { PublicIntakeDto } from './dto/public-intake.dto';
 import { FraudAnalysisService } from '../fraud-analysis/fraud-analysis.service';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 @Injectable()
 export class IntakeGatewayService {
@@ -15,6 +16,7 @@ export class IntakeGatewayService {
     @InjectRepository(IntakeSubmissionEntity)
     private readonly submissionRepo: Repository<IntakeSubmissionEntity>,
     private readonly fraudAnalysisService: FraudAnalysisService,
+    private readonly integrationsService: IntegrationsService,
   ) {}
 
   async submit(dto: PublicIntakeDto): Promise<{ submission_id: string; status: string; message: string }> {
@@ -62,10 +64,49 @@ export class IntakeGatewayService {
     this.fraudAnalysisService.analyze(submission, claimant, isRepeat)
       .catch(err => console.error('[FraudAnalysis] Failed:', err));
 
+    if (dto.conversation && dto.conversation.length > 0) {
+      this.analyzeConversation(submission.id, dto.conversation)
+        .catch(err => console.error('[ConversationAnalysis] Failed:', err));
+    }
+
     return {
       submission_id: submission.id,
       status: 'received',
       message: 'Your submission has been received and will be reviewed by our team.',
     };
+  }
+
+  private async analyzeConversation(
+    submissionId: string,
+    conversation: Array<{ role: string; content: string }>,
+  ): Promise<void> {
+    const prompt = `Analyze this legal intake conversation and extract structured information.
+
+Conversation:
+${conversation.map(m => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.content}`).join('\n')}`;
+
+    const schema = {
+      type: 'object',
+      properties: {
+        ai_chat_summary: { type: 'string' },
+        key_facts: { type: 'array', items: { type: 'string' } },
+        qualification_score: { type: 'number' },
+        case_type: { type: 'string' },
+      },
+    };
+
+    const result = await this.integrationsService.invokeLLM(prompt, schema) as {
+      ai_chat_summary: string;
+      key_facts: string[];
+      qualification_score: number;
+      case_type: string;
+    };
+
+    await this.submissionRepo.update(submissionId, {
+      ai_chat_summary: result.ai_chat_summary,
+      key_facts: result.key_facts,
+      qualification_score: result.qualification_score,
+      case_type: result.case_type,
+    });
   }
 }
