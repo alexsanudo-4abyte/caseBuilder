@@ -41,4 +41,6 @@ export class CreateFinancialRecordDto {
   description?: string;
 }
 
-export class UpdateFinancialRecordDto extends PartialType(CreateFinancialRecordDto) {}
+export class UpdateFinancialRecordDto extends PartialType(
+  CreateFinancialRecordDto,
+) {}

@@ -8,7 +8,13 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
-const ALL_ROLES = [Role.ADMIN, Role.ATTORNEY, Role.INTAKE_STAFF, Role.CASE_MANAGER, Role.CLAIMANT];
+const ALL_ROLES = [
+  Role.ADMIN,
+  Role.ATTORNEY,
+  Role.INTAKE_STAFF,
+  Role.CASE_MANAGER,
+  Role.CLAIMANT,
+];
 
 @Controller('auth')
 export class AuthController {
@@ -25,7 +31,11 @@ export class AuthController {
   @Throttle({ default: { ttl: 60000, limit: 10 } })
   @Post('register/claimant')
   async registerClaimant(@Body() dto: RegisterDto) {
-    return this.authService.registerClaimant(dto.full_name, dto.email, dto.password);
+    return this.authService.registerClaimant(
+      dto.full_name,
+      dto.email,
+      dto.password,
+    );
   }
 
   @Public()

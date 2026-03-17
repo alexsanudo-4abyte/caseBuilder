@@ -71,4 +71,6 @@ export class CreateCommunicationDto {
   requires_response?: boolean;
 }
 
-export class UpdateCommunicationDto extends PartialType(CreateCommunicationDto) {}
+export class UpdateCommunicationDto extends PartialType(
+  CreateCommunicationDto,
+) {}

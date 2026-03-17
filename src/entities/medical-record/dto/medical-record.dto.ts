@@ -21,7 +21,15 @@ export class CreateMedicalRecordDto {
   provider_name?: string;
 
   @IsOptional()
-  @IsIn(['hospital', 'clinic', 'specialist', 'primary_care', 'pharmacy', 'lab', 'other'])
+  @IsIn([
+    'hospital',
+    'clinic',
+    'specialist',
+    'primary_care',
+    'pharmacy',
+    'lab',
+    'other',
+  ])
   provider_type?: string;
 
   @IsOptional()
@@ -33,7 +41,14 @@ export class CreateMedicalRecordDto {
   provider_phone?: string;
 
   @IsOptional()
-  @IsIn(['pending', 'requested', 'received', 'processing', 'complete', 'unavailable'])
+  @IsIn([
+    'pending',
+    'requested',
+    'received',
+    'processing',
+    'complete',
+    'unavailable',
+  ])
   request_status?: string;
 
   @IsOptional()
@@ -86,4 +101,6 @@ export class CreateMedicalRecordDto {
   ai_timeline?: any[];
 }
 
-export class UpdateMedicalRecordDto extends PartialType(CreateMedicalRecordDto) {}
+export class UpdateMedicalRecordDto extends PartialType(
+  CreateMedicalRecordDto,
+) {}

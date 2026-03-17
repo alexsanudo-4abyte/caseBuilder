@@ -1,4 +1,10 @@
-import { IsOptional, IsString, MinLength, MaxLength, Matches } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  MinLength,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -14,7 +20,9 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[\d\s\-().]{7,20}$/, { message: 'phone must be a valid phone number' })
+  @Matches(/^\+?[\d\s\-().]{7,20}$/, {
+    message: 'phone must be a valid phone number',
+  })
   phone?: string;
 
   @IsOptional()

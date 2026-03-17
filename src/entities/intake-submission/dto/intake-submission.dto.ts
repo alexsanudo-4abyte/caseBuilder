@@ -72,4 +72,6 @@ export class CreateIntakeSubmissionDto {
   submitted_date?: string;
 }
 
-export class UpdateIntakeSubmissionDto extends PartialType(CreateIntakeSubmissionDto) {}
+export class UpdateIntakeSubmissionDto extends PartialType(
+  CreateIntakeSubmissionDto,
+) {}

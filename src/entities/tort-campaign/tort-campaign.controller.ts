@@ -1,10 +1,23 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CrudController } from '../../shared/crud.controller';
 import { Roles } from '../../auth/roles.decorator';
 import { Role } from '../../auth/role.enum';
 import { TortCampaignEntity } from './tort-campaign.entity';
 import { TortCampaignService } from './tort-campaign.service';
-import { CreateTortCampaignDto, UpdateTortCampaignDto } from './dto/tort-campaign.dto';
+import {
+  CreateTortCampaignDto,
+  UpdateTortCampaignDto,
+} from './dto/tort-campaign.dto';
 
 const READ_ROLES = [Role.ATTORNEY, Role.INTAKE_STAFF, Role.CASE_MANAGER];
 const WRITE_ROLES = [Role.ATTORNEY];
@@ -20,7 +33,8 @@ export class TortCampaignController extends CrudController<TortCampaignEntity> {
   findAll(@Query() query: Record<string, string>) {
     const { sort, limit, ...filters } = query;
     const limitNum = limit ? +limit : undefined;
-    if (Object.keys(filters).length) return this.service.filter(filters as any, sort, limitNum);
+    if (Object.keys(filters).length)
+      return this.service.filter(filters as any, sort, limitNum);
     return this.service.list(sort, limitNum);
   }
 

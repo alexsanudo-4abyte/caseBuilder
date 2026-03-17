@@ -1,6 +1,9 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import { join } from 'path';
+import * as fs from 'fs';
 import { AppModule } from './app.module';
 
 function validateEnv() {
@@ -8,19 +11,31 @@ function validateEnv() {
   if (!secret) throw new Error('JWT_SECRET environment variable is not set');
 
   const encryptionKey = process.env.ENCRYPTION_KEY;
-  if (!encryptionKey) throw new Error('ENCRYPTION_KEY environment variable is not set');
-  if (encryptionKey.length !== 64) throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+  if (!encryptionKey)
+    throw new Error('ENCRYPTION_KEY environment variable is not set');
+  if (encryptionKey.length !== 64)
+    throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
 
   const isProduction = process.env.NODE_ENV === 'production';
-  if (isProduction && (secret === 'casebuilder-jwt-secret-dev' || secret === 'dev-secret')) {
-    throw new Error('JWT_SECRET is still set to a development value — set a strong secret in production');
+  if (
+    isProduction &&
+    (secret === 'casebuilder-jwt-secret-dev' || secret === 'dev-secret')
+  ) {
+    throw new Error(
+      'JWT_SECRET is still set to a development value — set a strong secret in production',
+    );
   }
 }
 
 async function bootstrap() {
   validateEnv();
 
-  const app = await NestFactory.create(AppModule);
+  // Ensure uploads directory exists
+  const uploadsDir = join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useStaticAssets(uploadsDir, { prefix: '/uploads' });
 
   app.use(helmet());
 

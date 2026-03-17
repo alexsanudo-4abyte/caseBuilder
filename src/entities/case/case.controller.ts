@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CrudController } from '../../shared/crud.controller';
 import { Roles } from '../../auth/roles.decorator';
 import { Role } from '../../auth/role.enum';
@@ -20,7 +30,8 @@ export class CaseController extends CrudController<CaseEntity> {
   findAll(@Query() query: Record<string, string>) {
     const { sort, limit, ...filters } = query;
     const limitNum = limit ? +limit : undefined;
-    if (Object.keys(filters).length) return this.service.filter(filters as any, sort, limitNum);
+    if (Object.keys(filters).length)
+      return this.service.filter(filters as any, sort, limitNum);
     return this.service.list(sort, limitNum);
   }
 

@@ -7,7 +7,9 @@ export abstract class CrudService<T extends { id: string }> {
   private parseSort(sortStr?: string): FindOptionsOrder<T> {
     if (!sortStr) return {} as FindOptionsOrder<T>;
     const field = sortStr.startsWith('-') ? sortStr.slice(1) : sortStr;
-    const direction = sortStr.startsWith('-') ? ('DESC' as const) : ('ASC' as const);
+    const direction = sortStr.startsWith('-')
+      ? ('DESC' as const)
+      : ('ASC' as const);
     return { [field]: direction } as FindOptionsOrder<T>;
   }
 
@@ -18,7 +20,11 @@ export abstract class CrudService<T extends { id: string }> {
     });
   }
 
-  filter(where: FindOptionsWhere<T>, sort?: string, limit?: number): Promise<T[]> {
+  filter(
+    where: FindOptionsWhere<T>,
+    sort?: string,
+    limit?: number,
+  ): Promise<T[]> {
     return this.repo.find({
       where,
       order: this.parseSort(sort),

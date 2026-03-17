@@ -1,10 +1,23 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { CrudController } from '../../shared/crud.controller';
 import { Roles } from '../../auth/roles.decorator';
 import { Role } from '../../auth/role.enum';
 import { IntakeSubmissionEntity } from './intake-submission.entity';
 import { IntakeSubmissionService } from './intake-submission.service';
-import { CreateIntakeSubmissionDto, UpdateIntakeSubmissionDto } from './dto/intake-submission.dto';
+import {
+  CreateIntakeSubmissionDto,
+  UpdateIntakeSubmissionDto,
+} from './dto/intake-submission.dto';
 
 const ACCESS_ROLES = [Role.ATTORNEY, Role.INTAKE_STAFF];
 
@@ -19,7 +32,8 @@ export class IntakeSubmissionController extends CrudController<IntakeSubmissionE
   findAll(@Query() query: Record<string, string>) {
     const { sort, limit, ...filters } = query;
     const limitNum = limit ? +limit : undefined;
-    if (Object.keys(filters).length) return this.service.filter(filters as any, sort, limitNum);
+    if (Object.keys(filters).length)
+      return this.service.filter(filters as any, sort, limitNum);
     return this.service.list(sort, limitNum);
   }
 
