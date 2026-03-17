@@ -6,7 +6,6 @@ import PredictionDetailModal from '../components/predictions/PredictionDetailMod
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -21,16 +20,12 @@ import {
   DollarSign,
   AlertTriangle,
   Sparkles,
-  RefreshCw,
   Loader2,
-  ArrowRight,
   Target,
   ChevronRight,
   Info
 } from 'lucide-react';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -40,7 +35,6 @@ import {
   Bar,
   Cell
 } from 'recharts';
-import { format } from 'date-fns';
 
 export default function Predictions() {
   const [predictionType, setPredictionType] = useState('settlement_value');

@@ -8,7 +8,6 @@ import {
   AlertTriangle, 
   Lightbulb,
   ArrowRight,
-  CheckCircle,
   Brain
 } from 'lucide-react';
 

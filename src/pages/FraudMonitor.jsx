@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,6 @@ import {
   UserX,
   FileWarning,
   Network,
-  Clock,
   ArrowRight,
   Loader2,
   Search

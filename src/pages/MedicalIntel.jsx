@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,14 +32,9 @@ import {
   AlertTriangle,
   Loader2,
   Brain,
-  Download,
-  Upload,
   Eye,
-  Building,
-  Phone,
-  Calendar
+  Building
 } from 'lucide-react';
-import { format } from 'date-fns';
 
 const statusConfig = {
   pending: { label: 'Pending', color: 'bg-slate-100 text-slate-700', icon: Clock },

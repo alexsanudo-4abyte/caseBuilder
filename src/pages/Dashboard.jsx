@@ -10,24 +10,17 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MetricCard from '../components/dashboard/MetricCard';
 import CasesTable from '../components/dashboard/CasesTable';
-import AIInsightsPanel from '../components/dashboard/AIInsightsPanel';
-import CaseValueChart from '../components/dashboard/CaseValueChart';
 import {
   FolderOpen,
-  Users,
   DollarSign,
   Shield,
   AlertTriangle,
-  TrendingUp,
   Brain,
   Clock,
   CheckCircle,
   ArrowRight,
   Plus,
-  Filter,
-  RefreshCw,
-  Sparkles,
-  Activity
+  RefreshCw
 } from 'lucide-react';
 
 export default function Dashboard() {

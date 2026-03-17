@@ -10,11 +10,8 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  PieChart,
-  BarChart3,
   Download,
   ArrowUpRight,
-  ArrowDownRight,
   Wallet,
   Receipt,
   Calculator
@@ -31,10 +28,8 @@ import {
   Pie,
   Cell,
   BarChart,
-  Bar,
-  Legend
+  Bar
 } from 'recharts';
-import { format } from 'date-fns';
 
 export default function Financials() {
   const [timeRange, setTimeRange] = useState('6m');

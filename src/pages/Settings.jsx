@@ -13,14 +13,10 @@ import {
   Bell,
   Shield,
   Brain,
-  Palette,
-  Database,
-  Lock,
   Save,
   Loader2,
   CheckCircle,
-  Mail,
-  Building
+  Mail
 } from 'lucide-react';
 
 export default function SettingsPage() {

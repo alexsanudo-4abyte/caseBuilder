@@ -26,12 +26,9 @@ import {
   Plus,
   Users,
   DollarSign,
-  TrendingUp,
   CheckCircle,
   Loader2,
-  ArrowRight,
-  Calendar,
-  Scale
+  ArrowRight
 } from 'lucide-react';
 import {
   BarChart,
@@ -40,8 +37,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
-  Cell
+  ResponsiveContainer
 } from 'recharts';
 
 export default function Campaigns() {

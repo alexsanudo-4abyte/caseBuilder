@@ -3,7 +3,6 @@ import { apiClient } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart3,
@@ -13,7 +12,6 @@ import {
   Target,
   Brain,
   Download,
-  Calendar,
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react';
@@ -30,8 +28,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   Legend
 } from 'recharts';
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { apiClient } from '@/api/apiClient';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,11 +29,6 @@ import {
   CheckCircle,
   AlertTriangle,
   Loader2,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
-  FileText,
   Brain,
   ArrowRight
 } from 'lucide-react';

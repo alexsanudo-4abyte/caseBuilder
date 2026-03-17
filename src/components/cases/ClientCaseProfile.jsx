@@ -27,26 +27,20 @@ import {
   Phone,
   Mail,
   MapPin,
-  Calendar,
   FileText,
   Brain,
   Shield,
   DollarSign,
   Activity,
   MessageSquare,
-  Plus,
   Save,
   Edit,
-  X,
   Sparkles,
   AlertTriangle,
   CheckCircle,
   Clock,
-  Building,
   Loader2,
-  StickyNote,
-  Paperclip,
-  Send
+  StickyNote
 } from 'lucide-react';
 import FraudScoreGauge from '../dashboard/FraudScoreGauge';
 import { format } from 'date-fns';
