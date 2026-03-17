@@ -134,6 +134,19 @@ export const intake = {
   submit(data) {
     return http.post('/intake/submit', data);
   },
+  updateConversation(submissionId, conversation) {
+    return http.patch(`/intake/submissions/${submissionId}/conversation`, { conversation });
+  },
+  uploadDocument(submissionId, file, documentType) {
+    const form = new FormData();
+    form.append('file', file);
+    return http.post(`/intake/submissions/${submissionId}/documents?document_type=${encodeURIComponent(documentType)}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  getDocuments(submissionId) {
+    return http.get(`/intake/submissions/${submissionId}/documents`);
+  },
 };
 
 // ─── Agents stub (used in PublicIntake) ──────────────────────────────────────
