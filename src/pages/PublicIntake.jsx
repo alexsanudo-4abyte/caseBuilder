@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Scale, MessageSquare, Send, CheckCircle, Loader2, User, Mail, Phone, MapPin, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -34,30 +33,62 @@ export default function PublicIntake() {
   }, [messages]);
 
   const getSystemPrompt = () =>
-    `You are a compassionate intake assistant for a mass tort law firm. Gather information about a potential claimant's case through friendly conversation. Be concise and ask one question at a time.
+    `You are a compassionate intake assistant for a mass tort law firm. Your job is to gather information about a potential claimant's case through a warm, natural conversation. Ask one question at a time and acknowledge their answers empathetically before moving to the next topic.
 
-Claimant information already collected:
+Claimant information already collected (do not re-ask):
 - Name: ${formData.full_name}
 - Email: ${formData.email}
 ${formData.phone ? `- Phone: ${formData.phone}` : ''}
 ${formData.address ? `- Address: ${formData.address}` : ''}
 ${formData.date_of_birth ? `- Date of Birth: ${formData.date_of_birth}` : ''}
 
-Topics to cover in order: what happened, when it occurred, which product/drug/event was involved, injuries or health effects, medical treatment received. Once all topics are covered, close warmly and let them know they can submit.`;
+Work through the following topics in a natural, conversational order. Skip any that become obviously answered through prior responses:
+
+1. INCIDENT DETAILS — What happened? What date, time, and location did this occur?
+2. PRODUCT / PARTY INVOLVED — Which product, drug, device, company, or person was responsible?
+3. INJURIES & HEALTH EFFECTS — What injuries or health effects did they experience? Are they ongoing?
+4. MEDICAL TREATMENT — Did they seek medical care? What treatment have they received (ER, surgery, hospitalization, therapy, ongoing care)?
+5. OTHER PARTIES — Were there any witnesses? Other people injured? A defendant or employer involved?
+6. DOCUMENTATION — Do they have any documentation such as police reports, photos, medical records, receipts, or prescriptions?
+7. INSURANCE — Do they have health insurance, auto insurance, or any other coverage that may be relevant?
+8. BACKGROUND — Are they currently employed? Has this injury affected their ability to work or their daily life?
+
+Tone guidelines:
+- Be warm, empathetic, and non-judgmental
+- Use the claimant's first name occasionally
+- Acknowledge what they share before moving on ("That sounds like it was very difficult...")
+- Keep your replies concise — one empathetic sentence + one question at a time
+
+Closing: Once you have covered the key topics (at minimum: what happened, when, injuries, and treatment), provide a warm closing summary like the example below, then tell them they're all set to submit:
+
+Example closing:
+"Thank you for sharing all of that, [Name]. It sounds like you've been through quite an ordeal. Here's a summary of what you've shared:
+• What happened: [brief description]
+• When: [date/timeframe]
+• Injuries: [list]
+• Treatment: [list]
+• [any other key points]
+
+You're all set to submit your information for our legal team to review! Someone will be in touch at the contact details you've provided to discuss next steps. Thank you so much for reaching out — we're here to help, and we wish you a smooth recovery!"
+
+IMPORTANT: Do not rush the closing. Make sure you have gathered enough detail across the key topics before summarising. If a claimant gives a very short answer, gently follow up to get more detail.`;
+
+  // Hidden opener keeps the Anthropic API happy (must start with a user turn)
+  // but is never rendered or stored in the submitted conversation.
+  const HIDDEN_OPENER = { role: 'user', content: '[INTAKE_START]' };
+
+  const callLLM = (visibleMessages) =>
+    apiClient.integrations.Core.InvokeLLM({
+      system: getSystemPrompt(),
+      messages: [HIDDEN_OPENER, ...visibleMessages],
+    });
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setIsSending(true);
     try {
-      const firstUserMsg = `Hi, I'm ${formData.full_name} and I'd like to find out if I have a case.`;
-      const greeting = await apiClient.integrations.Core.InvokeLLM({
-        system: getSystemPrompt(),
-        messages: [{ role: 'user', content: firstUserMsg }],
-      });
-      setMessages([
-        { role: 'user', content: firstUserMsg },
-        { role: 'assistant', content: greeting },
-      ]);
+      const greeting = await callLLM([]);
+      setMessages([{ role: 'assistant', content: greeting }]);
       setStep(2);
     } catch (error) {
       console.error('Error starting conversation:', error);
@@ -74,10 +105,7 @@ Topics to cover in order: what happened, when it occurred, which product/drug/ev
     setInputMessage('');
     setIsSending(true);
     try {
-      const reply = await apiClient.integrations.Core.InvokeLLM({
-        system: getSystemPrompt(),
-        messages: updated,
-      });
+      const reply = await callLLM(updated);
       setMessages([...updated, { role: 'assistant', content: reply }]);
     } catch (error) {
       console.error('Error sending message:', error);
@@ -302,14 +330,19 @@ Topics to cover in order: what happened, when it occurred, which product/drug/ev
                   {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </Button>
               </div>
-              <Button 
-                onClick={() => setStep(3)} 
-                variant="outline" 
-                className="w-full"
-                disabled={messages.length < 4}
-              >
-                Continue to Submit
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => setStep(3)}
+                  variant="outline"
+                  className="w-full"
+                  disabled={messages.length < 2}
+                >
+                  Continue to Submit
+                </Button>
+                <p className="text-xs text-slate-500 text-center leading-relaxed">
+                  You can submit at any time — the more detail you share, the easier it is for our legal team to evaluate your case and get back to you quickly.
+                </p>
+              </div>
             </div>
           </Card>
         )}
