@@ -7,6 +7,7 @@ import { Role } from './role.enum';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateClaimantProfileDto } from './dto/update-claimant-profile.dto';
 
 const ALL_ROLES = [
   Role.ADMIN,
@@ -56,6 +57,12 @@ export class AuthController {
   @Patch('profile')
   updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
     return this.authService.updateProfile(req.user.userId, dto);
+  }
+
+  @Roles(Role.CLAIMANT)
+  @Patch('claimant-profile')
+  updateClaimantProfile(@Req() req: any, @Body() dto: UpdateClaimantProfileDto) {
+    return this.authService.updateClaimantProfile(req.user.userId, dto);
   }
 
   @Roles(Role.CLAIMANT)

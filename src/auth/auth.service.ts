@@ -114,6 +114,49 @@ export class AuthService {
     });
   }
 
+  async updateClaimantProfile(
+    userId: string,
+    data: {
+      full_name?: string;
+      phone?: string;
+      address?: string;
+      date_of_birth?: string;
+    },
+  ) {
+    const user = await this.users.findById(userId);
+    if (!user) throw new UnauthorizedException();
+
+    // Resolve claimant record (same self-healing pattern as mySubmissions)
+    let claimant = await this.claimantRepo.findOne({ where: { user_id: userId } });
+    if (!claimant) {
+      const emailHash = hmac(user.email.toLowerCase());
+      claimant = await this.claimantRepo.findOne({ where: { email_hash: emailHash } });
+      if (claimant)
+        await this.claimantRepo.update(claimant.id, { user_id: userId });
+    }
+    if (!claimant) throw new BadRequestException('Claimant record not found');
+
+    const updates: Partial<ClaimantEntity> = {};
+    if (data.full_name !== undefined) updates.full_name = data.full_name;
+    if (data.phone !== undefined) {
+      updates.phone = data.phone;
+      updates.phone_hash = data.phone ? hmac(data.phone) : '';
+    }
+    if (data.address !== undefined) updates.address = data.address;
+    if (data.date_of_birth !== undefined) updates.date_of_birth = data.date_of_birth;
+
+    await this.claimantRepo.update(claimant.id, updates);
+
+    const updated = (await this.claimantRepo.findOne({ where: { id: claimant.id } }))!;
+    return {
+      full_name:     updated.full_name,
+      email:         updated.email,
+      phone:         updated.phone,
+      address:       updated.address,
+      date_of_birth: updated.date_of_birth,
+    };
+  }
+
   async updateProfile(
     userId: string,
     data: {
