@@ -149,6 +149,12 @@ export const intake = {
   },
 };
 
+// ─── Case analysis ────────────────────────────────────────────────────────────
+
+export const caseAnalysis = {
+  analyze: (caseId) => http.post(`/cases/${caseId}/analyze`),
+};
+
 // ─── Agents stub (used in PublicIntake) ──────────────────────────────────────
 
 export const agents = {
@@ -185,6 +191,7 @@ export const apiClient = {
   auth,
   integrations,
   intake,
+  caseAnalysis,
   agents,
   appLogs,
 };

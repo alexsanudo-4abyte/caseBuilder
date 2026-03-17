@@ -128,8 +128,18 @@ export default function IntakeReview() {
         intake_source: submission.intake_channel ?? 'web_form',
         intake_date: new Date().toISOString(),
         notes: submission.admin_notes,
+        claimant_name: payload.full_name ?? null,
+        claimant_email: payload.email ?? null,
       });
       await apiClient.entities.IntakeSubmission.update(submission.id, { case_id: newCase.id });
+
+      // Backfill case_id onto any documents uploaded before case creation
+      const docs = await apiClient.entities.Document.filter({ intake_submission_id: submission.id });
+      await Promise.all(docs.map(doc => apiClient.entities.Document.update(doc.id, { case_id: newCase.id })));
+
+      // Trigger AI case analysis in the background (fire-and-forget)
+      apiClient.caseAnalysis.analyze(newCase.id).catch(() => {});
+
       return newCase;
     },
     onSuccess: (newCase) => {

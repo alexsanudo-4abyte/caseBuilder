@@ -89,6 +89,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Command Center', page: 'Dashboard', icon: LayoutDashboard },
     { name: 'Cases', page: 'Cases', icon: FolderOpen },
     { name: 'Intake Hub', page: 'IntakeHub', icon: Users },
+    { name: 'Intake Review', page: 'IntakeReview', icon: FileText },
     { name: 'Fraud Monitor', page: 'FraudMonitor', icon: Shield },
     { name: 'AI Predictions', page: 'Predictions', icon: Brain },
     { name: 'Financials', page: 'Financials', icon: DollarSign },
