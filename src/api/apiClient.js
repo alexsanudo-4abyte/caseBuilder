@@ -97,6 +97,9 @@ export const auth = {
     return response.user;
   },
 
+  updateClaimantProfile(data) {
+    return http.patch('/auth/claimant-profile', data);
+  },
   mySubmissions() {
     return http.get('/auth/my-submissions');
   },

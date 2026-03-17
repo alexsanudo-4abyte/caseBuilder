@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Scale, Send, Loader2, User, Mail, Phone,
   MapPin, Calendar, MessageSquare, Clock, FileText, LogOut, CheckCircle2,
-  Paperclip, Upload, X, File,
+  Paperclip, Upload, X, File, Edit, Save,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/lib/AuthContext';
@@ -98,6 +98,11 @@ export default function ClaimantPortal() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
+  // ── Contact info edit ─────────────────────────────────────────────────────
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [contactForm, setContactForm] = useState({ full_name: '', phone: '', address: '', date_of_birth: '' });
+  const [isSavingContact, setIsSavingContact] = useState(false);
+
   // ── Continuation chat (returning claimant) ────────────────────────────────
   const [continuation, setContinuation] = useState([]); // new messages added this session
   const [continuationInput, setContinuationInput] = useState('');
@@ -128,6 +133,13 @@ export default function ClaimantPortal() {
 
   useEffect(() => {
     if (submissions.length > 0) {
+      const pii = submissions[0].raw_payload ?? {};
+      setContactForm({
+        full_name:     pii.full_name     ?? user?.full_name ?? '',
+        phone:         pii.phone         ?? '',
+        address:       pii.address       ?? '',
+        date_of_birth: pii.date_of_birth ?? '',
+      });
       apiClient.intake.getDocuments(submissions[0].id)
         .then(setDocuments)
         .catch(() => {});
@@ -293,6 +305,19 @@ export default function ClaimantPortal() {
     }
   };
 
+  const handleSaveContact = async () => {
+    setIsSavingContact(true);
+    try {
+      await apiClient.auth.updateClaimantProfile(contactForm);
+      setIsEditingContact(false);
+      toast.success('Contact information updated');
+    } catch (err) {
+      toast.error('Could not save — please try again');
+    } finally {
+      setIsSavingContact(false);
+    }
+  };
+
   const statusCfg = latest
     ? (STATUS_CONFIG[latest.status] ?? { label: latest.status, color: 'bg-slate-100 text-slate-700' })
     : null;
@@ -370,6 +395,135 @@ export default function ClaimantPortal() {
                   <Clock className="w-4 h-4" />
                   Our team typically responds within 1–2 business days.
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Contact Information */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="border-b pb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="w-5 h-5 text-blue-600" />
+                    <CardTitle className="text-base">Contact Information</CardTitle>
+                  </div>
+                  {!isEditingContact ? (
+                    <Button variant="ghost" size="sm" onClick={() => setIsEditingContact(true)}>
+                      <Edit className="w-4 h-4 mr-1" /> Edit
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setIsEditingContact(false)} disabled={isSavingContact}>
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={handleSaveContact} disabled={isSavingContact} className="bg-blue-600 hover:bg-blue-700">
+                        {isSavingContact ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4 mr-1" />Save</>}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="p-4">
+                {!isEditingContact ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-start gap-2">
+                      <User className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-slate-500 mb-0.5">Full Name</p>
+                        <p className="font-medium text-slate-800">{contactForm.full_name || '—'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Mail className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-slate-500 mb-0.5">Email</p>
+                        <p className="font-medium text-slate-800">{user?.email || '—'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Phone className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-slate-500 mb-0.5">Phone</p>
+                        <p className="font-medium text-slate-800">{contactForm.phone || '—'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-slate-500 mb-0.5">Date of Birth</p>
+                        <p className="font-medium text-slate-800">{contactForm.date_of_birth || '—'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2 sm:col-span-2">
+                      <MapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs text-slate-500 mb-0.5">Address</p>
+                        <p className="font-medium text-slate-800">{contactForm.address || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-slate-600 mb-1 block">Full Name</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <Input
+                            value={contactForm.full_name}
+                            onChange={e => setContactForm(f => ({ ...f, full_name: e.target.value }))}
+                            className="pl-9"
+                            placeholder="Full name"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-600 mb-1 block">Email (cannot be changed)</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <Input value={user?.email || ''} disabled className="pl-9 bg-slate-50 text-slate-400" />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-600 mb-1 block">Phone</Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <Input
+                            value={contactForm.phone}
+                            onChange={e => setContactForm(f => ({ ...f, phone: e.target.value }))}
+                            className="pl-9"
+                            placeholder="(555) 123-4567"
+                            type="tel"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-slate-600 mb-1 block">Date of Birth</Label>
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <Input
+                            value={contactForm.date_of_birth}
+                            onChange={e => setContactForm(f => ({ ...f, date_of_birth: e.target.value }))}
+                            className="pl-9"
+                            type="date"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-600 mb-1 block">Address</Label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                        <Textarea
+                          value={contactForm.address}
+                          onChange={e => setContactForm(f => ({ ...f, address: e.target.value }))}
+                          className="pl-9"
+                          placeholder="123 Main St, City, State, ZIP"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
