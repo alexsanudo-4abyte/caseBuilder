@@ -32,14 +32,17 @@ export class AuditInterceptor implements NestInterceptor {
     const url: string = req.url;
     const isMutation = method in METHOD_ACTION_MAP;
     const entityType = this.extractEntityType(url);
-    const isSensitiveRead = method === 'GET' && SENSITIVE_ENTITY_TYPES.has(entityType);
+    const isSensitiveRead =
+      method === 'GET' && SENSITIVE_ENTITY_TYPES.has(entityType);
 
     if (!isMutation && !isSensitiveRead) return next.handle();
 
     const user = req.user;
     const action: AuditAction = METHOD_ACTION_MAP[method] ?? 'READ';
     const entityId: string | undefined = req.params?.id;
-    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ?? req.socket?.remoteAddress;
+    const ipAddress =
+      req.headers['x-forwarded-for']?.split(',')[0]?.trim() ??
+      req.socket?.remoteAddress;
     const userAgent = req.headers['user-agent'];
 
     return next.handle().pipe(

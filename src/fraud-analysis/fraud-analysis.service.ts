@@ -9,7 +9,13 @@ import { ClaimantEntity } from '../entities/claimant/claimant.entity';
 const FRAUD_SCHEMA = {
   risk_level: 'low|medium|high|critical',
   confidence: '<number 0-1>',
-  flags: [{ type: '<string>', description: '<string>', severity: 'low|medium|high|critical' }],
+  flags: [
+    {
+      type: '<string>',
+      description: '<string>',
+      severity: 'low|medium|high|critical',
+    },
+  ],
   explanation: '<string>',
 };
 
@@ -26,8 +32,13 @@ export class FraudAnalysisService {
     claimant: ClaimantEntity,
     isRepeat: boolean,
   ): Promise<void> {
-    const rawPayload = (submission.raw_payload ?? {}) as Record<string, unknown>;
-    const repeatLabel = isRepeat ? `Yes (prior submission exists)` : `No, first submission`;
+    const rawPayload = (submission.raw_payload ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const repeatLabel = isRepeat
+      ? `Yes (prior submission exists)`
+      : `No, first submission`;
 
     const prompt = `You are a legal intake fraud detection system for a mass tort litigation firm.
 

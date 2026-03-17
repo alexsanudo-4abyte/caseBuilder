@@ -38,7 +38,10 @@ export class IntegrationsService {
 
     if (responseJsonSchema) {
       try {
-        const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+        const cleaned = text
+          .replace(/^```json\n?/, '')
+          .replace(/\n?```$/, '')
+          .trim();
         return JSON.parse(cleaned);
       } catch {
         return { raw: text };

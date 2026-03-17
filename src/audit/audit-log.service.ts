@@ -36,6 +36,8 @@ export class AuditLogService {
         ip_address: ctx.ipAddress,
         user_agent: ctx.userAgent,
       })
-      .catch((err) => console.error('[AuditLog] Failed to write log entry:', err));
+      .catch((err) =>
+        console.error('[AuditLog] Failed to write log entry:', err),
+      );
   }
 }

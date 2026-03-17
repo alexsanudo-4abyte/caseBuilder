@@ -38,7 +38,11 @@ import { FraudAnalysisModule } from './fraud-analysis/fraud-analysis.module';
         url: config.get<string>('DATABASE_URL'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
-        ssl: config.get('DATABASE_URL')?.includes('localhost') || config.get('DATABASE_URL')?.includes('127.0.0.1') ? false : { rejectUnauthorized: true },
+        ssl:
+          config.get('DATABASE_URL')?.includes('localhost') ||
+          config.get('DATABASE_URL')?.includes('127.0.0.1')
+            ? false
+            : { rejectUnauthorized: true },
         extra: {
           max: 1,
           idleTimeoutMillis: 10000,
@@ -87,7 +91,8 @@ import { FraudAnalysisModule } from './fraud-analysis/fraud-analysis.module';
     },
     {
       provide: APP_INTERCEPTOR,
-      useFactory: (auditLogService: AuditLogService) => new AuditInterceptor(auditLogService),
+      useFactory: (auditLogService: AuditLogService) =>
+        new AuditInterceptor(auditLogService),
       inject: [AuditLogService],
     },
   ],

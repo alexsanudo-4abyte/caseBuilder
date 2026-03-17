@@ -21,7 +21,9 @@ export class AiJobService {
     private readonly integrationsService: IntegrationsService,
   ) {}
 
-  async run(options: RunOptions): Promise<{ job: AiJobEntity; result: unknown }> {
+  async run(
+    options: RunOptions,
+  ): Promise<{ job: AiJobEntity; result: unknown }> {
     const model = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6';
 
     const job = this.aiJobRepo.create({
@@ -36,7 +38,10 @@ export class AiJobService {
     await this.aiJobRepo.save(job);
 
     try {
-      const result = await this.integrationsService.invokeLLM(options.prompt, options.schema);
+      const result = await this.integrationsService.invokeLLM(
+        options.prompt,
+        options.schema,
+      );
       job.raw_response = JSON.stringify(result);
       job.status = 'complete';
       await this.aiJobRepo.save(job);
