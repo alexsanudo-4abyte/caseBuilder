@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,7 @@ function ConversationThread({ messages = [] }) {
 export default function CaseDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const caseId = urlParams.get('id');
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editedNotes, setEditedNotes] = useState('');
@@ -92,11 +93,18 @@ export default function CaseDetail() {
 
   const currentCase = caseData?.[0];
 
-  // ── Intake submission (PII + AI analysis) ───────────────────────────────────
+  // ── Intake submission (PII + AI analysis — primary) ─────────────────────────
   const { data: intakeSubmission } = useQuery({
     queryKey: ['intake-submission', currentCase?.intake_submission_id],
     queryFn: () => apiClient.entities.IntakeSubmission.get(currentCase.intake_submission_id),
     enabled: !!currentCase?.intake_submission_id,
+  });
+
+  // ── All intakes linked to this case ──────────────────────────────────────────
+  const { data: linkedIntakes = [] } = useQuery({
+    queryKey: ['linked-intakes', caseId],
+    queryFn: () => apiClient.entities.IntakeSubmission.filter({ case_id: caseId }),
+    enabled: !!caseId,
   });
 
   // ── Documents: by case_id AND by intake_submission_id (pre-promotion uploads)
@@ -134,6 +142,12 @@ export default function CaseDetail() {
     queryKey: ['tasks', caseId],
     queryFn: () => apiClient.entities.Task.filter({ case_id: caseId }),
     enabled: !!caseId,
+  });
+
+  // ── Staff users for assignment dropdown ────────────────────────────────────
+  const { data: staffUsers = [] } = useQuery({
+    queryKey: ['staff-users'],
+    queryFn: () => apiClient.staffUsers.list(),
   });
 
   const updateCaseMutation = useMutation({
@@ -259,6 +273,7 @@ export default function CaseDetail() {
           <Tabs defaultValue="details">
             <TabsList className="bg-white border">
               <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="intakes">Intakes ({linkedIntakes.length})</TabsTrigger>
               <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
               {intakeConversation.length > 0 && (
                 <TabsTrigger value="intake">Intake Chat</TabsTrigger>
@@ -339,8 +354,27 @@ export default function CaseDetail() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Assigned Attorney</p>
-                        <p className="font-medium">{currentCase.assigned_attorney || '—'}</p>
+                        <p className="text-xs text-slate-500 mb-1">Assigned To</p>
+                        <Select
+                          value={currentCase.assigned_user_id ?? 'unassigned'}
+                          onValueChange={(v) => {
+                            const staff = staffUsers.find(u => u.id === v);
+                            updateCaseMutation.mutate({
+                              assigned_user_id: v === 'unassigned' ? null : v,
+                              assigned_attorney: staff?.full_name ?? null,
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="h-8 text-sm">
+                            <SelectValue placeholder="Unassigned" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unassigned">— Unassigned —</SelectItem>
+                            {staffUsers.map((u) => (
+                              <SelectItem key={u.id} value={u.id}>{u.full_name} ({u.role})</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500">Lead Source</p>
@@ -460,6 +494,93 @@ export default function CaseDetail() {
                 </Card>
               </TabsContent>
             )}
+
+            {/* Intakes Tab */}
+            <TabsContent value="intakes" className="mt-4">
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-6">
+                  {linkedIntakes.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                      <p className="text-slate-500">No intake submissions linked to this case</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {linkedIntakes.map((sub) => {
+                        const pii = sub.raw_payload ?? {};
+                        const isPrimary = sub.id === currentCase.intake_submission_id;
+                        const scoreColor =
+                          sub.qualification_score >= 70 ? 'text-emerald-600' :
+                          sub.qualification_score >= 40 ? 'text-amber-600' : 'text-red-600';
+                        return (
+                          <div
+                            key={sub.id}
+                            className="border border-slate-200 rounded-lg p-4 space-y-3 cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
+                            onClick={() => navigate(createPageUrl('IntakeReview') + `?id=${sub.id}`)}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-medium text-slate-900">{pii.full_name || '—'}</p>
+                                  {isPrimary && (
+                                    <Badge className="bg-blue-100 text-blue-700 border-0 text-xs">Primary</Badge>
+                                  )}
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-xs ${
+                                      sub.status === 'approved'       ? 'border-green-300 text-green-700' :
+                                      sub.status === 'rejected'       ? 'border-red-300 text-red-700' :
+                                      sub.status === 'needs_info'     ? 'border-blue-300 text-blue-700' :
+                                      'border-yellow-300 text-yellow-700'
+                                    }`}
+                                  >
+                                    {sub.status?.replace(/_/g, ' ') ?? 'pending review'}
+                                  </Badge>
+                                  {sub.case_type && (
+                                    <Badge variant="outline" className="text-xs">{sub.case_type}</Badge>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-slate-500">
+                                  {pii.email && <span>{pii.email}</span>}
+                                  {pii.phone && <span>{pii.phone}</span>}
+                                  {sub.submitted_date && (
+                                    <span>Submitted {format(new Date(sub.submitted_date), 'MMM d, yyyy')}</span>
+                                  )}
+                                  {sub.intake_channel && <span className="capitalize">{sub.intake_channel.replace(/_/g, ' ')}</span>}
+                                </div>
+                              </div>
+                              {sub.qualification_score != null && (
+                                <div className="text-right shrink-0">
+                                  <p className="text-xs text-slate-500">AI Score</p>
+                                  <p className={`text-lg font-bold ${scoreColor}`}>{sub.qualification_score}%</p>
+                                </div>
+                              )}
+                            </div>
+                            {sub.ai_chat_summary && (
+                              <p className="text-sm text-slate-600 leading-relaxed line-clamp-3 border-t pt-3">
+                                {sub.ai_chat_summary}
+                              </p>
+                            )}
+                            {sub.key_facts?.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {sub.key_facts.map((f, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs">{f}</Badge>
+                                ))}
+                              </div>
+                            )}
+                            {sub.admin_notes && (
+                              <p className="text-xs text-slate-500 italic border-t pt-2">
+                                Notes: {sub.admin_notes}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Medical Tab */}
             <TabsContent value="medical" className="mt-4">

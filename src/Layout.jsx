@@ -12,7 +12,6 @@ import {
   BarChart3,
   MessageSquare,
   Settings,
-  Bell,
   Search,
   ChevronDown,
   LogOut,
@@ -20,7 +19,6 @@ import {
   X,
   Scale,
   Sparkles,
-  AlertTriangle,
   FolderOpen,
   Activity,
   Target
@@ -42,7 +40,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 
 export default function Layout({ children, currentPageName }) {
   const navigate = useNavigate();
@@ -96,6 +93,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Analytics', page: 'Analytics', icon: BarChart3 },
     { name: 'Campaigns', page: 'Campaigns', icon: Target },
     { name: 'Communications', page: 'Communications', icon: MessageSquare },
+    { name: 'Team', page: 'UserManagement', icon: Activity },
   ];
 
   const handleLogout = async () => {

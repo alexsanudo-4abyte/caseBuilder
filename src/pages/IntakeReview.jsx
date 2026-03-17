@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { apiClient } from '@/api/apiClient';
 import { useAuth } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,6 +23,7 @@ import {
   Briefcase,
   Clock,
   Globe,
+  User,
 } from 'lucide-react';
 import {
   Dialog,
@@ -30,6 +32,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from 'sonner';
@@ -89,15 +98,26 @@ export default function IntakeReview() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const location = useLocation();
+  const deepLinkId = new URLSearchParams(location.search).get('id');
+
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [filterStatus, setFilterStatus] = useState('pending_review');
   const [search, setSearch] = useState('');
+  const [caseSearch, setCaseSearch] = useState('');
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ['intake-submissions'],
     queryFn: () => apiClient.entities.IntakeSubmission.list('-submitted_date', 200),
   });
+
+  // Auto-open modal when navigated to with ?id=
+  useEffect(() => {
+    if (!deepLinkId || !submissions.length || selectedSubmission) return;
+    const match = submissions.find(s => s.id === deepLinkId);
+    if (match) openReview(match);
+  }, [deepLinkId, submissions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status, notes }) =>
@@ -151,9 +171,65 @@ export default function IntakeReview() {
     onError: () => toast.error('Failed to create case'),
   });
 
+  const { data: staffUsers = [] } = useQuery({
+    queryKey: ['staff-users'],
+    queryFn: () => apiClient.staffUsers.list(),
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: ({ id, assigned_user_id }) =>
+      apiClient.entities.IntakeSubmission.update(id, { assigned_user_id }),
+    onSuccess: (_, { full_name: assigneeName }) => {
+      queryClient.invalidateQueries({ queryKey: ['intake-submissions'] });
+      toast.success(assigneeName ? `Assigned to ${assigneeName}` : 'Assignment cleared');
+    },
+    onError: () => toast.error('Failed to assign'),
+  });
+
+  const { data: allCases = [] } = useQuery({
+    queryKey: ['cases-list'],
+    queryFn: () => apiClient.entities.Case.list('-created_date', 500),
+  });
+
+  const linkToCaseMutation = useMutation({
+    mutationFn: async ({ submissionId, caseId }) => {
+      // Link intake → case
+      await apiClient.entities.IntakeSubmission.update(submissionId, { case_id: caseId });
+      // Link case → intake (so CaseDetail can find the submission)
+      await apiClient.entities.Case.update(caseId, { intake_submission_id: submissionId });
+      // Backfill case_id on any documents uploaded with this intake
+      const docs = await apiClient.entities.Document.filter({ intake_submission_id: submissionId });
+      await Promise.all(docs.map(doc => apiClient.entities.Document.update(doc.id, { case_id: caseId })));
+    },
+    onSuccess: (_, { caseId }) => {
+      queryClient.invalidateQueries({ queryKey: ['intake-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['cases-list'] });
+      setSelectedSubmission(prev => prev ? { ...prev, case_id: caseId } : null);
+      setCaseSearch('');
+      toast.success('Intake linked to case');
+    },
+    onError: () => toast.error('Failed to link to case'),
+  });
+
+  const unlinkFromCaseMutation = useMutation({
+    mutationFn: async ({ submissionId, caseId }) => {
+      await apiClient.entities.IntakeSubmission.update(submissionId, { case_id: null });
+      // Only clear the case's intake_submission_id if it points to this submission
+      await apiClient.entities.Case.update(caseId, { intake_submission_id: null });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['intake-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['cases-list'] });
+      setSelectedSubmission(prev => prev ? { ...prev, case_id: null } : null);
+      toast.success('Intake unlinked from case');
+    },
+    onError: () => toast.error('Failed to unlink'),
+  });
+
   const openReview = (submission) => {
     setSelectedSubmission(submission);
     setAdminNotes(submission.admin_notes ?? '');
+    setCaseSearch('');
   };
 
   const handleStatusUpdate = (status) => {
@@ -196,7 +272,7 @@ export default function IntakeReview() {
   }, [submissions, filterStatus, search]);
 
   const selectedPII = selectedSubmission ? getPII(selectedSubmission) : null;
-  const alreadyPromoted = !!selectedSubmission?.case_id;
+
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
@@ -288,6 +364,15 @@ export default function IntakeReview() {
                             Case created
                           </Badge>
                         )}
+                        {submission.assigned_user_id && (() => {
+                          const assignee = staffUsers.find(u => u.id === submission.assigned_user_id);
+                          return assignee ? (
+                            <Badge variant="outline" className="text-xs flex items-center gap-1">
+                              <User className="w-3 h-3" />
+                              {assignee.full_name}
+                            </Badge>
+                          ) : null;
+                        })()}
                       </div>
 
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600 mb-3">
@@ -408,6 +493,30 @@ export default function IntakeReview() {
                 )}
               </section>
 
+              {/* Assignment */}
+              <section className="flex items-center gap-4">
+                <p className="text-sm font-medium text-slate-700 whitespace-nowrap">Assigned to</p>
+                <Select
+                  value={selectedSubmission.assigned_user_id ?? 'unassigned'}
+                  onValueChange={(v) => {
+                    const staff = staffUsers.find(u => u.id === v);
+                    const newId = v === 'unassigned' ? null : v;
+                    assignMutation.mutate({ id: selectedSubmission.id, assigned_user_id: newId, full_name: staff?.full_name });
+                    setSelectedSubmission(prev => ({ ...prev, assigned_user_id: newId }));
+                  }}
+                >
+                  <SelectTrigger className="w-56 h-8 text-sm">
+                    <SelectValue placeholder="— Unassigned —" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">— Unassigned —</SelectItem>
+                    {staffUsers.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>{u.full_name} ({u.role})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </section>
+
               {/* AI Summary */}
               {selectedSubmission.ai_chat_summary && (
                 <section>
@@ -464,39 +573,106 @@ export default function IntakeReview() {
 
               <Separator />
 
-              {/* Promote to Case */}
-              {selectedSubmission.status === 'approved' && (
-                <section>
-                  {alreadyPromoted ? (
-                    <div className="flex items-center justify-between rounded-lg bg-purple-50 border border-purple-200 px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-purple-900">Case already created</p>
-                        <p className="text-xs text-purple-600 mt-0.5">This submission has been promoted to a case.</p>
-                      </div>
+              {/* Link to existing case */}
+              <section>
+                <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4" />
+                  Case Assignment
+                </h3>
+                {selectedSubmission.case_id ? (
+                  <div className="flex items-center justify-between rounded-lg bg-purple-50 border border-purple-200 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-purple-900">Linked to a case</p>
+                      <p className="text-xs text-purple-600 mt-0.5">
+                        {allCases.find(c => c.id === selectedSubmission.case_id)
+                          ? `${allCases.find(c => c.id === selectedSubmission.case_id).case_number || 'Case'} — ${allCases.find(c => c.id === selectedSubmission.case_id).claimant_name || ''}`
+                          : selectedSubmission.case_id.slice(0, 8)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" asChild>
                         <a href={createPageUrl('CaseDetail') + `?id=${selectedSubmission.case_id}`}>
                           <ExternalLink className="w-4 h-4 mr-1" />
-                          View Case
+                          View
                         </a>
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between rounded-lg bg-green-50 border border-green-200 px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-green-900">Promote to Case</p>
-                        <p className="text-xs text-green-600 mt-0.5">Create a case record in the Qualification stage.</p>
-                      </div>
                       <Button
+                        variant="ghost"
                         size="sm"
-                        className="bg-green-700 hover:bg-green-800 text-white"
-                        onClick={() => promoteToCase.mutate(selectedSubmission)}
-                        disabled={promoteToCase.isPending}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => unlinkFromCaseMutation.mutate({ submissionId: selectedSubmission.id, caseId: selectedSubmission.case_id })}
+                        disabled={unlinkFromCaseMutation.isPending}
                       >
-                        <Briefcase className="w-4 h-4 mr-1.5" />
-                        {promoteToCase.isPending ? 'Creating…' : 'Promote to Case'}
+                        Unlink
                       </Button>
                     </div>
-                  )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Search cases by claimant name, case number…"
+                      value={caseSearch}
+                      onChange={e => setCaseSearch(e.target.value)}
+                      className="text-sm"
+                    />
+                    {caseSearch.trim().length >= 2 && (() => {
+                      const q = caseSearch.toLowerCase();
+                      const matches = allCases.filter(c =>
+                        (c.claimant_name ?? '').toLowerCase().includes(q) ||
+                        (c.case_number ?? '').toLowerCase().includes(q) ||
+                        (c.case_type ?? '').toLowerCase().includes(q)
+                      ).slice(0, 6);
+                      return matches.length === 0 ? (
+                        <p className="text-xs text-slate-400 px-1">No matching cases found.</p>
+                      ) : (
+                        <div className="border rounded-lg divide-y bg-white shadow-sm">
+                          {matches.map(c => (
+                            <button
+                              key={c.id}
+                              className="w-full text-left px-3 py-2.5 hover:bg-slate-50 transition-colors flex items-center justify-between group"
+                              onClick={() => linkToCaseMutation.mutate({ submissionId: selectedSubmission.id, caseId: c.id })}
+                              disabled={linkToCaseMutation.isPending}
+                            >
+                              <div>
+                                <p className="text-sm font-medium text-slate-900">
+                                  {c.claimant_name || '—'}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {c.case_number || `CASE-${c.id.slice(0, 6).toUpperCase()}`}
+                                  {c.case_type ? ` · ${c.case_type.replace(/_/g, ' ')}` : ''}
+                                  {c.status ? ` · ${c.status}` : ''}
+                                </p>
+                              </div>
+                              <span className="text-xs text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                Link →
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </section>
+
+              {/* Promote to Case — only available when approved and not yet linked */}
+              {selectedSubmission.status === 'approved' && !selectedSubmission.case_id && (
+                <section>
+                  <div className="flex items-center justify-between rounded-lg bg-green-50 border border-green-200 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-green-900">Promote to new case</p>
+                      <p className="text-xs text-green-600 mt-0.5">Create a fresh case record in the Qualification stage.</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-green-700 hover:bg-green-800 text-white"
+                      onClick={() => promoteToCase.mutate(selectedSubmission)}
+                      disabled={promoteToCase.isPending}
+                    >
+                      <Briefcase className="w-4 h-4 mr-1.5" />
+                      {promoteToCase.isPending ? 'Creating…' : 'Promote to Case'}
+                    </Button>
+                  </div>
                 </section>
               )}
 

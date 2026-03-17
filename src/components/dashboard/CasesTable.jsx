@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { createPageUrl } from '../../utils';
+import { apiClient } from '@/api/apiClient';
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -16,6 +18,7 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  User,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -45,6 +48,13 @@ const scoreColor = (score) =>
 export default function CasesTable({ cases = [], compact = false }) {
   const navigate = useNavigate();
 
+  const { data: staffUsers = [] } = useQuery({
+    queryKey: ['staff-users'],
+    queryFn: () => apiClient.staffUsers.list(),
+  });
+
+  const staffById = Object.fromEntries(staffUsers.map(u => [u.id, u]));
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -58,6 +68,7 @@ export default function CasesTable({ cases = [], compact = false }) {
             {!compact && <TableHead className="font-semibold text-slate-600">Credibility</TableHead>}
             {!compact && <TableHead className="font-semibold text-slate-600">Settlement</TableHead>}
             {!compact && <TableHead className="font-semibold text-slate-600">Est. Value</TableHead>}
+            {!compact && <TableHead className="font-semibold text-slate-600">Assigned To</TableHead>}
             <TableHead className="font-semibold text-slate-600">Intake Date</TableHead>
           </TableRow>
         </TableHeader>
@@ -173,6 +184,26 @@ export default function CasesTable({ cases = [], compact = false }) {
                   </TableCell>
                 )}
 
+                {!compact && (
+                  <TableCell>
+                    {c.assigned_user_id && staffById[c.assigned_user_id] ? (
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[9px] font-semibold flex-shrink-0">
+                          {staffById[c.assigned_user_id].full_name.charAt(0)}
+                        </div>
+                        <span className="text-sm text-slate-700 truncate max-w-[120px]">
+                          {staffById[c.assigned_user_id].full_name}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-slate-400 flex items-center gap-1">
+                        <User className="w-3.5 h-3.5" />
+                        Unassigned
+                      </span>
+                    )}
+                  </TableCell>
+                )}
+
                 <TableCell>
                   <span className="text-sm text-slate-600">
                     {c.intake_date ? format(new Date(c.intake_date), 'MMM d, yyyy') : '—'}
@@ -184,7 +215,7 @@ export default function CasesTable({ cases = [], compact = false }) {
 
           {cases.length === 0 && (
             <TableRow>
-              <TableCell colSpan={compact ? 5 : 9} className="text-center py-12 text-slate-500">
+              <TableCell colSpan={compact ? 5 : 10} className="text-center py-12 text-slate-500">
                 No cases found
               </TableCell>
             </TableRow>

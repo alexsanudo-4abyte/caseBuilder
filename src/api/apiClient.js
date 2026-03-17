@@ -158,6 +158,15 @@ export const caseAnalysis = {
   analyze: (caseId) => http.post(`/cases/${caseId}/analyze`),
 };
 
+// ─── Staff user management ────────────────────────────────────────────────────
+
+export const staffUsers = {
+  list: () => http.get('/users'),
+  create: (data) => http.post('/users', data),
+  update: (id, data) => http.patch(`/users/${id}`, data),
+  delete: (id) => http.delete(`/users/${id}`),
+};
+
 // ─── Agents stub (used in PublicIntake) ──────────────────────────────────────
 
 export const agents = {
@@ -195,6 +204,7 @@ export const apiClient = {
   integrations,
   intake,
   caseAnalysis,
+  staffUsers,
   agents,
   appLogs,
 };

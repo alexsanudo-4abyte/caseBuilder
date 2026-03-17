@@ -61,6 +61,7 @@ import Predictions from './pages/Predictions';
 import Settings from './pages/Settings';
 import PublicIntake from './pages/PublicIntake';
 import IntakeReview from './pages/IntakeReview';
+import UserManagement from './pages/UserManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -79,6 +80,7 @@ export const PAGES = {
     "Settings": Settings,
     "PublicIntake": PublicIntake,
     "IntakeReview": IntakeReview,
+    "UserManagement": UserManagement,
 }
 
 export const pagesConfig = {
