@@ -38,4 +38,8 @@ export class ClaimantEntity extends BaseEntity {
   @Index()
   @Column({ nullable: true })
   phone_hash: string;
+
+  @Index()
+  @Column({ nullable: true })
+  user_id: string;
 }

@@ -49,6 +49,10 @@ export class AuthService {
     if (existing) throw new BadRequestException('Email already in use');
     const hash = await bcrypt.hash(password, 10);
     const user = await this.users.create({ full_name: fullName, email, password: hash, role: 'claimant' });
+    // Link any existing claimant record (from anonymous submission) to this user account
+    const emailHash = hmac(email.toLowerCase());
+    const claimant = await this.claimantRepo.findOne({ where: { email_hash: emailHash } });
+    if (claimant) await this.claimantRepo.update(claimant.id, { user_id: user.id });
     return this.login(user);
   }
 
@@ -61,8 +65,13 @@ export class AuthService {
   async mySubmissions(userId: string) {
     const user = await this.users.findById(userId);
     if (!user) throw new UnauthorizedException();
-    const emailHash = hmac(user.email.toLowerCase());
-    const claimant = await this.claimantRepo.findOne({ where: { email_hash: emailHash } });
+    // Try user_id FK first (set on register), fall back to email hash for legacy records
+    let claimant = await this.claimantRepo.findOne({ where: { user_id: userId } });
+    if (!claimant) {
+      const emailHash = hmac(user.email.toLowerCase());
+      claimant = await this.claimantRepo.findOne({ where: { email_hash: emailHash } });
+      if (claimant) await this.claimantRepo.update(claimant.id, { user_id: userId });
+    }
     if (!claimant) return [];
     return this.submissionRepo.find({
       where: { claimant_id: claimant.id },
