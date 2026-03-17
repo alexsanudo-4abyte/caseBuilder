@@ -11,6 +11,10 @@ export class DocumentEntity extends BaseEntity {
   @Column({ nullable: true })
   case_id: string;
 
+  // Set when uploaded by claimant before a case exists; staff can leave as-is or link to case later
+  @Column({ nullable: true })
+  intake_submission_id: string;
+
   @Column({ nullable: true })
   title: string;
 
