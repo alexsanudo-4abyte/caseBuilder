@@ -175,7 +175,7 @@ export default function Dashboard() {
               </Link>
             </CardHeader>
             <CardContent className="p-0">
-              <CasesTable cases={recentCases} compact showActions />
+              <CasesTable cases={recentCases} compact />
             </CardContent>
           </Card>
 

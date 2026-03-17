@@ -3,11 +3,11 @@ import { apiClient } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -18,13 +18,10 @@ import {
 import CasesTable from '../components/dashboard/CasesTable';
 import {
   Search,
-  Filter,
   Plus,
   Download,
-  Upload,
   Grid3X3,
   List,
-  SlidersHorizontal,
   X
 } from 'lucide-react';
 
@@ -206,7 +203,7 @@ export default function Cases() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
             </div>
           ) : viewMode === 'table' ? (
-            <CasesTable cases={filteredCases} showActions />
+            <CasesTable cases={filteredCases} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
               {filteredCases.map((caseItem) => (

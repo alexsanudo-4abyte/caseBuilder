@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { apiClient } from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -17,16 +17,13 @@ import {
 } from "@/components/ui/select";
 import {
   ArrowLeft,
-  User,
   Phone,
   Mail,
   MapPin,
-  Calendar,
   FileText,
   Brain,
   Shield,
   DollarSign,
-  Clock,
   CheckCircle,
   AlertTriangle,
   Activity,
@@ -34,23 +31,50 @@ import {
   Loader2,
   Edit,
   Save,
-  Sparkles
+  Sparkles,
+  RefreshCw,
+  HelpCircle,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import FraudScoreGauge from '../components/dashboard/FraudScoreGauge';
 import { format } from 'date-fns';
 
 const statusConfig = {
-  intake: { label: 'Intake', color: 'bg-slate-100 text-slate-700' },
+  intake:        { label: 'Intake',        color: 'bg-slate-100 text-slate-700' },
   qualification: { label: 'Qualification', color: 'bg-blue-100 text-blue-700' },
-  signed: { label: 'Signed', color: 'bg-indigo-100 text-indigo-700' },
-  active: { label: 'Active', color: 'bg-emerald-100 text-emerald-700' },
-  discovery: { label: 'Discovery', color: 'bg-purple-100 text-purple-700' },
-  trial_prep: { label: 'Trial Prep', color: 'bg-amber-100 text-amber-700' },
-  settlement: { label: 'Settlement', color: 'bg-green-100 text-green-700' },
-  closed: { label: 'Closed', color: 'bg-slate-100 text-slate-700' },
-  dismissed: { label: 'Dismissed', color: 'bg-red-100 text-red-700' },
-  rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700' },
+  signed:        { label: 'Signed',        color: 'bg-indigo-100 text-indigo-700' },
+  active:        { label: 'Active',        color: 'bg-emerald-100 text-emerald-700' },
+  discovery:     { label: 'Discovery',     color: 'bg-purple-100 text-purple-700' },
+  trial_prep:    { label: 'Trial Prep',    color: 'bg-amber-100 text-amber-700' },
+  settlement:    { label: 'Settlement',    color: 'bg-green-100 text-green-700' },
+  closed:        { label: 'Closed',        color: 'bg-slate-100 text-slate-700' },
+  dismissed:     { label: 'Dismissed',     color: 'bg-red-100 text-red-700' },
+  rejected:      { label: 'Rejected',      color: 'bg-red-100 text-red-700' },
 };
+
+function ConversationThread({ messages = [] }) {
+  if (!messages.length) return <p className="text-sm text-slate-500 italic">No conversation recorded.</p>;
+  return (
+    <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+      {messages.map((msg, idx) => (
+        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm leading-relaxed ${
+            msg.role === 'user'
+              ? 'bg-blue-600 text-white rounded-br-sm'
+              : 'bg-slate-100 text-slate-900 rounded-bl-sm'
+          }`}>
+            {msg.content}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function CaseDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -59,18 +83,41 @@ export default function CaseDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedNotes, setEditedNotes] = useState('');
 
+  // ── Primary case query ──────────────────────────────────────────────────────
   const { data: caseData, isLoading } = useQuery({
     queryKey: ['case', caseId],
     queryFn: () => apiClient.entities.Case.filter({ id: caseId }),
     enabled: !!caseId,
   });
 
-  const { data: documents = [] } = useQuery({
-    queryKey: ['documents', caseId],
+  const currentCase = caseData?.[0];
+
+  // ── Intake submission (PII + AI analysis) ───────────────────────────────────
+  const { data: intakeSubmission } = useQuery({
+    queryKey: ['intake-submission', currentCase?.intake_submission_id],
+    queryFn: () => apiClient.entities.IntakeSubmission.get(currentCase.intake_submission_id),
+    enabled: !!currentCase?.intake_submission_id,
+  });
+
+  // ── Documents: by case_id AND by intake_submission_id (pre-promotion uploads)
+  const { data: caseDocuments = [] } = useQuery({
+    queryKey: ['documents-case', caseId],
     queryFn: () => apiClient.entities.Document.filter({ case_id: caseId }),
     enabled: !!caseId,
   });
 
+  const { data: intakeDocs = [] } = useQuery({
+    queryKey: ['documents-intake', currentCase?.intake_submission_id],
+    queryFn: () => apiClient.entities.Document.filter({ intake_submission_id: currentCase.intake_submission_id }),
+    enabled: !!currentCase?.intake_submission_id,
+  });
+
+  const documents = useMemo(() => {
+    const ids = new Set(caseDocuments.map(d => d.id));
+    return [...caseDocuments, ...intakeDocs.filter(d => !ids.has(d.id))];
+  }, [caseDocuments, intakeDocs]);
+
+  // ── Other related data ──────────────────────────────────────────────────────
   const { data: medicalRecords = [] } = useQuery({
     queryKey: ['medicalRecords', caseId],
     queryFn: () => apiClient.entities.MedicalRecord.filter({ case_id: caseId }),
@@ -97,13 +144,26 @@ export default function CaseDetail() {
     },
   });
 
-  const currentCase = caseData?.[0];
+  const analyzeMutation = useMutation({
+    mutationFn: () => apiClient.caseAnalysis.analyze(caseId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['case', caseId] }),
+  });
 
   useEffect(() => {
-    if (currentCase) {
-      setEditedNotes(currentCase.notes || '');
-    }
+    if (currentCase) setEditedNotes(currentCase.notes || '');
   }, [currentCase]);
+
+  // ── Derived PII from intake payload ────────────────────────────────────────
+  const pii = intakeSubmission?.raw_payload ?? {};
+  const claimantName    = pii.full_name  ?? currentCase?.claimant_name  ?? '—';
+  const claimantEmail   = pii.email      ?? currentCase?.claimant_email  ?? null;
+  const claimantPhone   = pii.phone      ?? currentCase?.claimant_phone  ?? null;
+  const claimantAddress = pii.address    ?? currentCase?.claimant_address ?? null;
+  const intakeConversation = pii.conversation ?? [];
+
+  const aiSummary = currentCase?.ai_case_summary ?? intakeSubmission?.ai_chat_summary;
+  const keyFacts  = intakeSubmission?.key_facts ?? [];
+  const qualScore = intakeSubmission?.qualification_score;
 
   if (isLoading) {
     return (
@@ -142,7 +202,7 @@ export default function CaseDetail() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">
-                {currentCase.claimant_name}
+                {claimantName}
               </h1>
               <Badge className={status.color}>{status.label}</Badge>
             </div>
@@ -152,8 +212,8 @@ export default function CaseDetail() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Select 
-            value={currentCase.status} 
+          <Select
+            value={currentCase.status}
             onValueChange={(v) => updateCaseMutation.mutate({ status: v })}
           >
             <SelectTrigger className="w-40">
@@ -170,10 +230,11 @@ export default function CaseDetail() {
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Details */}
+        {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* AI Summary Card */}
-          {currentCase.ai_case_summary && (
+
+          {/* AI Summary */}
+          {aiSummary && (
             <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -182,7 +243,14 @@ export default function CaseDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-700">{currentCase.ai_case_summary}</p>
+                <p className="text-slate-700">{aiSummary}</p>
+                {keyFacts.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {keyFacts.map((fact, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">{fact}</Badge>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -192,10 +260,14 @@ export default function CaseDetail() {
             <TabsList className="bg-white border">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
+              {intakeConversation.length > 0 && (
+                <TabsTrigger value="intake">Intake Chat</TabsTrigger>
+              )}
               <TabsTrigger value="medical">Medical ({medicalRecords.length})</TabsTrigger>
               <TabsTrigger value="tasks">Tasks ({tasks.length})</TabsTrigger>
             </TabsList>
 
+            {/* Details Tab */}
             <TabsContent value="details" className="mt-4">
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-6">
@@ -203,33 +275,42 @@ export default function CaseDetail() {
                   <div className="mb-6">
                     <h3 className="font-semibold text-slate-900 mb-4">Contact Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Mail className="w-4 h-4 text-blue-600" />
+                      {claimantEmail && (
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Mail className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500">Email</p>
+                            <p className="font-medium">{claimantEmail}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Email</p>
-                          <p className="font-medium">{currentCase.claimant_email || '--'}</p>
+                      )}
+                      {claimantPhone && (
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-emerald-100 rounded-lg">
+                            <Phone className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500">Phone</p>
+                            <p className="font-medium">{claimantPhone}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-100 rounded-lg">
-                          <Phone className="w-4 h-4 text-emerald-600" />
+                      )}
+                      {claimantAddress && (
+                        <div className="flex items-center gap-3 col-span-2">
+                          <div className="p-2 bg-purple-100 rounded-lg">
+                            <MapPin className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500">Address</p>
+                            <p className="font-medium">{claimantAddress}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Phone</p>
-                          <p className="font-medium">{currentCase.claimant_phone || '--'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 col-span-2">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <MapPin className="w-4 h-4 text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Address</p>
-                          <p className="font-medium">{currentCase.claimant_address || '--'}</p>
-                        </div>
-                      </div>
+                      )}
+                      {!claimantEmail && !claimantPhone && !claimantAddress && (
+                        <p className="text-sm text-slate-400 col-span-2">No contact details on record.</p>
+                      )}
                     </div>
                   </div>
 
@@ -239,32 +320,49 @@ export default function CaseDetail() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div>
                         <p className="text-xs text-slate-500">Case Type</p>
-                        <p className="font-medium capitalize">{currentCase.case_type?.replace(/_/g, ' ')}</p>
+                        <p className="font-medium capitalize">{currentCase.case_type?.replace(/_/g, ' ') || intakeSubmission?.case_type || '—'}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500">Tort Campaign</p>
-                        <p className="font-medium">{currentCase.tort_campaign || '--'}</p>
+                        <p className="font-medium">{currentCase.tort_campaign || '—'}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500">Intake Date</p>
                         <p className="font-medium">
-                          {currentCase.intake_date ? format(new Date(currentCase.intake_date), 'MMM d, yyyy') : '--'}
+                          {currentCase.intake_date ? format(new Date(currentCase.intake_date), 'MMM d, yyyy') : '—'}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500">Injury Date</p>
                         <p className="font-medium">
-                          {currentCase.injury_date ? format(new Date(currentCase.injury_date), 'MMM d, yyyy') : '--'}
+                          {currentCase.injury_date ? format(new Date(currentCase.injury_date), 'MMM d, yyyy') : '—'}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500">Assigned Attorney</p>
-                        <p className="font-medium">{currentCase.assigned_attorney || '--'}</p>
+                        <p className="font-medium">{currentCase.assigned_attorney || '—'}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500">Lead Source</p>
-                        <p className="font-medium capitalize">{currentCase.intake_source || '--'}</p>
+                        <p className="font-medium capitalize">{currentCase.intake_source || '—'}</p>
                       </div>
+                      {qualScore != null && (
+                        <div>
+                          <p className="text-xs text-slate-500">AI Qualification Score</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  qualScore >= 70 ? 'bg-green-500' :
+                                  qualScore >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                }`}
+                                style={{ width: `${qualScore}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-semibold text-slate-800">{qualScore}%</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -280,8 +378,8 @@ export default function CaseDetail() {
                   <div className="pt-6 border-t">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-slate-900">Notes</h3>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => {
                           if (isEditing) {
@@ -292,15 +390,9 @@ export default function CaseDetail() {
                         }}
                       >
                         {isEditing ? (
-                          <>
-                            <Save className="w-4 h-4 mr-1" />
-                            Save
-                          </>
+                          <><Save className="w-4 h-4 mr-1" />Save</>
                         ) : (
-                          <>
-                            <Edit className="w-4 h-4 mr-1" />
-                            Edit
-                          </>
+                          <><Edit className="w-4 h-4 mr-1" />Edit</>
                         )}
                       </Button>
                     </div>
@@ -318,6 +410,7 @@ export default function CaseDetail() {
               </Card>
             </TabsContent>
 
+            {/* Documents Tab */}
             <TabsContent value="documents" className="mt-4">
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-6">
@@ -334,7 +427,7 @@ export default function CaseDetail() {
                           </div>
                           {doc.file_url && (
                             <Button variant="ghost" size="sm" asChild>
-                              <a href={doc.file_url} target="_blank" rel="noopener noreferrer">View</a>
+                              <a href={`http://localhost:3000${doc.file_url}`} target="_blank" rel="noopener noreferrer">View</a>
                             </Button>
                           )}
                         </div>
@@ -350,6 +443,25 @@ export default function CaseDetail() {
               </Card>
             </TabsContent>
 
+            {/* Intake Conversation Tab */}
+            {intakeConversation.length > 0 && (
+              <TabsContent value="intake" className="mt-4">
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-blue-600" />
+                      Intake Conversation
+                      <span className="text-xs font-normal text-slate-400">({intakeConversation.length} messages)</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ConversationThread messages={intakeConversation} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+
+            {/* Medical Tab */}
             <TabsContent value="medical" className="mt-4">
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-6">
@@ -378,6 +490,7 @@ export default function CaseDetail() {
               </Card>
             </TabsContent>
 
+            {/* Tasks Tab */}
             <TabsContent value="tasks" className="mt-4">
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-6">
@@ -414,33 +527,104 @@ export default function CaseDetail() {
         {/* Right Column - Scores & Alerts */}
         <div className="space-y-6">
           {/* AI Scores */}
+          <TooltipProvider>
           <Card className="border-0 shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Brain className="w-5 h-5 text-purple-600" />
-                AI Assessment
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-purple-600" />
+                  AI Assessment
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => analyzeMutation.mutate()}
+                  disabled={analyzeMutation.isPending}
+                  className="text-slate-500 hover:text-slate-800"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-1 ${analyzeMutation.isPending ? 'animate-spin' : ''}`} />
+                  {analyzeMutation.isPending ? 'Analyzing…' : 'Re-analyze'}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4 text-center mb-4">
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{currentCase.case_strength_score || '--'}</p>
-                  <p className="text-xs text-slate-500">Strength</p>
+              {currentCase.case_strength_score == null && !analyzeMutation.isPending ? (
+                <div className="text-center py-4 space-y-3">
+                  <p className="text-sm text-slate-500">No AI assessment yet.</p>
+                  <Button size="sm" onClick={() => analyzeMutation.mutate()}>
+                    <Brain className="w-4 h-4 mr-1.5" />
+                    Run AI Analysis
+                  </Button>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{currentCase.credibility_score || '--'}</p>
-                  <p className="text-xs text-slate-500">Credibility</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-slate-900">{currentCase.settlement_probability || '--'}%</p>
-                  <p className="text-xs text-slate-500">Settlement</p>
-                </div>
-              </div>
-              <div className="flex justify-center">
-                <FraudScoreGauge score={currentCase.fraud_score || 0} size="md" />
-              </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-4 text-center mb-4">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="cursor-help">
+                          <p className="text-2xl font-bold text-slate-900">
+                            {currentCase.case_strength_score ?? '—'}
+                          </p>
+                          <p className="text-xs text-slate-500 flex items-center justify-center gap-0.5">
+                            Strength <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-56 text-center">
+                        Overall litigation strength (0–100). Considers injury specificity, exposure evidence, medical documentation, and provable damages.
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="cursor-help">
+                          <p className="text-2xl font-bold text-slate-900">
+                            {currentCase.credibility_score ?? '—'}
+                          </p>
+                          <p className="text-xs text-slate-500 flex items-center justify-center gap-0.5">
+                            Credibility <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-56 text-center">
+                        How consistent and believable the claimant's account is (0–100). Based on specificity, corroboration, and internal consistency of the intake conversation.
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="cursor-help">
+                          <p className="text-2xl font-bold text-slate-900">
+                            {currentCase.settlement_probability != null
+                              ? `${currentCase.settlement_probability}%`
+                              : '—'}
+                          </p>
+                          <p className="text-xs text-slate-500 flex items-center justify-center gap-0.5">
+                            Settlement <HelpCircle className="w-3 h-3 text-slate-400" />
+                          </p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-56 text-center">
+                        Estimated probability of settlement vs. dismissal. Accounts for campaign MDL status, qualifying criteria match, and damages magnitude.
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex justify-center cursor-help">
+                        <FraudScoreGauge score={currentCase.fraud_score || 0} size="md" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-56 text-center">
+                      Fraud risk score (0–100). 0 = no concerns. Elevated scores indicate inconsistencies, implausible claims, or patterns matching known fraud indicators for this campaign.
+                    </TooltipContent>
+                  </Tooltip>
+                </>
+              )}
             </CardContent>
           </Card>
+          </TooltipProvider>
 
           {/* Estimated Value */}
           <Card className="border-0 shadow-sm">
@@ -454,7 +638,7 @@ export default function CaseDetail() {
               {currentCase.estimated_value_low && currentCase.estimated_value_high ? (
                 <div className="text-center">
                   <p className="text-3xl font-bold text-slate-900">
-                    ${(currentCase.estimated_value_low / 1000).toFixed(0)}K - ${(currentCase.estimated_value_high / 1000).toFixed(0)}K
+                    ${(currentCase.estimated_value_low / 1000).toFixed(0)}K – ${(currentCase.estimated_value_high / 1000).toFixed(0)}K
                   </p>
                   <p className="text-sm text-slate-500 mt-1">Predicted settlement range</p>
                 </div>
