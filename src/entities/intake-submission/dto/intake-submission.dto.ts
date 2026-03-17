@@ -64,6 +64,10 @@ export class CreateIntakeSubmissionDto {
   reviewed_by?: string;
 
   @IsOptional()
+  @IsUUID()
+  assigned_user_id?: string;
+
+  @IsOptional()
   @IsString()
   reviewed_date?: string;
 

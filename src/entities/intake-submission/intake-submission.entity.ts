@@ -50,6 +50,10 @@ export class IntakeSubmissionEntity extends BaseEntity {
   @Column({ nullable: true })
   reviewed_by: string;
 
+  // FK to the staff user assigned to review this submission
+  @Column({ nullable: true })
+  assigned_user_id: string;
+
   @Column({ nullable: true })
   reviewed_date: string;
 

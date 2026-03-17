@@ -60,6 +60,10 @@ export class CaseEntity extends BaseEntity {
   @Column({ nullable: true })
   assigned_attorney: string;
 
+  // FK to the staff user assigned to this case
+  @Column({ nullable: true })
+  assigned_user_id: string;
+
   @Column({ nullable: true, type: 'float' })
   estimated_value_low: number;
 

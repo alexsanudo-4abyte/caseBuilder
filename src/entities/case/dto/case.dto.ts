@@ -87,6 +87,10 @@ export class CreateCaseDto {
   assigned_attorney?: string;
 
   @IsOptional()
+  @IsUUID()
+  assigned_user_id?: string;
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   estimated_value_low?: number;
