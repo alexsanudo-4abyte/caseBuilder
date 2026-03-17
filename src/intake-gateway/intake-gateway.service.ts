@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { ClaimantEntity } from '../entities/claimant/claimant.entity';
 import { IntakeSubmissionEntity } from '../entities/intake-submission/intake-submission.entity';
 import { DocumentEntity } from '../entities/document/document.entity';
+import { TortCampaignEntity } from '../entities/tort-campaign/tort-campaign.entity';
 import { hmac } from '../shared/crypto';
 import { PublicIntakeDto } from './dto/public-intake.dto';
 import { FraudAnalysisService } from '../fraud-analysis/fraud-analysis.service';
@@ -18,6 +19,8 @@ export class IntakeGatewayService {
     private readonly submissionRepo: Repository<IntakeSubmissionEntity>,
     @InjectRepository(DocumentEntity)
     private readonly documentRepo: Repository<DocumentEntity>,
+    @InjectRepository(TortCampaignEntity)
+    private readonly campaignRepo: Repository<TortCampaignEntity>,
     private readonly fraudAnalysisService: FraudAnalysisService,
     private readonly integrationsService: IntegrationsService,
   ) {}
@@ -71,7 +74,7 @@ export class IntakeGatewayService {
       .catch((err) => console.error('[FraudAnalysis] Failed:', err));
 
     if (dto.conversation && dto.conversation.length > 0) {
-      this.analyzeConversation(submission.id, dto.conversation).catch((err) =>
+      this.analyzeConversation(submission, dto.conversation).catch((err) =>
         console.error('[ConversationAnalysis] Failed:', err),
       );
     }
@@ -105,7 +108,7 @@ export class IntakeGatewayService {
     });
 
     // Re-analyze the enriched conversation in the background
-    this.analyzeConversation(submissionId, conversation).catch((err) =>
+    this.analyzeConversation(submission, conversation).catch((err) =>
       console.error('[ConversationAnalysis] Failed:', err),
     );
 
@@ -176,13 +179,85 @@ export class IntakeGatewayService {
   }
 
   private async analyzeConversation(
-    submissionId: string,
+    submission: IntakeSubmissionEntity,
     conversation: Array<{ role: string; content: string }>,
   ): Promise<void> {
-    const prompt = `Analyze this legal intake conversation and extract structured information.
+    const payload = (submission.raw_payload ?? {}) as Record<string, unknown>;
 
-Conversation:
-${conversation.map((m) => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.content}`).join('\n')}`;
+    // Load campaign qualifying criteria if available
+    let campaignContext = 'No specific campaign criteria provided.';
+    if (submission.tort_campaign_id) {
+      const campaign = await this.campaignRepo.findOne({
+        where: { id: submission.tort_campaign_id },
+      });
+      if (campaign) {
+        const parts: string[] = [`Campaign: ${campaign.name}`];
+        if (campaign.qualifying_criteria)
+          parts.push(`Qualifying criteria: ${campaign.qualifying_criteria}`);
+        if (campaign.statute_of_limitations_info)
+          parts.push(
+            `Statute of limitations: ${campaign.statute_of_limitations_info}`,
+          );
+        if (campaign.defendants?.length)
+          parts.push(`Defendants: ${campaign.defendants.join(', ')}`);
+        campaignContext = parts.join('\n');
+      }
+    }
+
+    const transcript = conversation
+      .map((m) => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.content}`)
+      .join('\n');
+
+    const prompt = `You are a legal intake analyst at a mass tort litigation firm. Analyze this claimant intake conversation and produce a structured evaluation.
+
+## Campaign Context
+${campaignContext}
+
+## Claimant Background
+Name: ${(payload.full_name as string) ?? 'unknown'}
+Date of birth: ${(payload.date_of_birth as string) ?? 'not provided'}
+Address: ${(payload.address as string) ?? 'not provided'}
+
+## Intake Conversation
+${transcript}
+
+---
+
+## Your Tasks
+
+### 1. Qualification Score (0–100)
+Score how well this claimant matches the campaign's qualifying criteria. Use the rubric below:
+
+**Automatic disqualifiers (score ≤ 10):**
+- Claimant explicitly states they were not exposed to the defendant's product or event
+- Injury date is outside the statute of limitations and no tolling argument is apparent
+- Claimant clearly has no compensable injury
+
+**Strong signals that raise the score:**
+- Confirmed exposure to the defendant's product, drug, or event (+20)
+- Specific, credible injury description that matches qualifying criteria (+20)
+- Medical treatment sought and documented (+15)
+- Injury/exposure timeline is plausible and within limitations period (+15)
+- Multiple corroborating details (witnesses, records, receipts) (+10)
+- Claimant is articulate and consistent throughout (+5)
+- Injury severity is significant (hospitalization, surgery, permanent damage) (+10)
+- Financial or employment impact described (+5)
+
+**Signals that lower the score:**
+- Vague or inconsistent injury description (-10 to -20)
+- No medical treatment sought (-10)
+- Exposure to defendant's product unconfirmed or uncertain (-15)
+- Timeline is unclear or potentially outside limitations (-10)
+- Claimant unsure whether injuries are related to the campaign (-10)
+
+### 2. Key Facts
+Extract 3–7 concrete facts from the conversation that an attorney would need to evaluate the case (e.g. product used, injury date, diagnosis, treatment received, employment impact).
+
+### 3. Case Type
+Identify the most specific case type (e.g. "pharmaceutical injury", "defective medical device", "environmental exposure", "product liability", "negligence").
+
+### 4. Summary
+Write a 2–3 sentence attorney-facing summary of this claimant's situation, injury, and overall case strength.`;
 
     const schema = {
       type: 'object',
@@ -204,7 +279,7 @@ ${conversation.map((m) => `${m.role === 'user' ? 'Claimant' : 'Assistant'}: ${m.
       case_type: string;
     };
 
-    await this.submissionRepo.update(submissionId, {
+    await this.submissionRepo.update(submission.id, {
       ai_chat_summary: result.ai_chat_summary,
       key_facts: result.key_facts,
       qualification_score: result.qualification_score,
