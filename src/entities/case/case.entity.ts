@@ -23,6 +23,13 @@ export class CaseEntity extends BaseEntity {
   @Column({ nullable: true })
   intake_submission_id: string;
 
+  // Denormalized for list views (populated at promotion time)
+  @Column({ nullable: true })
+  claimant_name: string;
+
+  @Column({ nullable: true })
+  claimant_email: string;
+
   @Column({ nullable: true })
   case_number: string;
 

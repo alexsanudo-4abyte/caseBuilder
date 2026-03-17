@@ -14,6 +14,7 @@ import { Roles } from '../../auth/roles.decorator';
 import { Role } from '../../auth/role.enum';
 import { CaseEntity } from './case.entity';
 import { CaseService } from './case.service';
+import { CaseAnalysisService } from './case-analysis.service';
 import { CreateCaseDto, UpdateCaseDto } from './dto/case.dto';
 
 const READ_ROLES = [Role.ATTORNEY, Role.INTAKE_STAFF, Role.CASE_MANAGER];
@@ -21,7 +22,10 @@ const WRITE_ROLES = [Role.ATTORNEY, Role.CASE_MANAGER];
 
 @Controller('cases')
 export class CaseController extends CrudController<CaseEntity> {
-  constructor(readonly service: CaseService) {
+  constructor(
+    readonly service: CaseService,
+    private readonly caseAnalysisService: CaseAnalysisService,
+  ) {
     super(service);
   }
 
@@ -51,6 +55,12 @@ export class CaseController extends CrudController<CaseEntity> {
   @Roles(...WRITE_ROLES)
   update(@Param('id') id: string, @Body() dto: UpdateCaseDto) {
     return this.service.update(id, dto);
+  }
+
+  @Post(':id/analyze')
+  @Roles(...WRITE_ROLES)
+  analyze(@Param('id') id: string) {
+    return this.caseAnalysisService.analyze(id);
   }
 
   @Delete(':id')

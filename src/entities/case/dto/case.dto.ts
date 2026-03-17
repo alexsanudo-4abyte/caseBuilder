@@ -39,6 +39,14 @@ export class CreateCaseDto {
 
   @IsOptional()
   @IsString()
+  claimant_name?: string;
+
+  @IsOptional()
+  @IsString()
+  claimant_email?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(50)
   case_number?: string;
 
