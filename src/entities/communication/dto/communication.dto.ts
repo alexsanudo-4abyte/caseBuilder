@@ -69,6 +69,10 @@ export class CreateCommunicationDto {
   @IsOptional()
   @IsBoolean()
   requires_response?: boolean;
+
+  @IsOptional()
+  @IsIn(['claimant', 'staff'])
+  recipient_type?: string;
 }
 
 export class UpdateCommunicationDto extends PartialType(

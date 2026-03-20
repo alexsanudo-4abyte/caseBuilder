@@ -18,12 +18,16 @@ import {
   CreateCommunicationDto,
   UpdateCommunicationDto,
 } from './dto/communication.dto';
+import { EmailService } from '../../integrations/email.service';
 
 const ACCESS_ROLES = [Role.ATTORNEY, Role.CASE_MANAGER];
 
 @Controller('communications')
 export class CommunicationController extends CrudController<CommunicationEntity> {
-  constructor(readonly service: CommunicationService) {
+  constructor(
+    readonly service: CommunicationService,
+    private readonly emailService: EmailService,
+  ) {
     super(service);
   }
 
@@ -45,8 +49,21 @@ export class CommunicationController extends CrudController<CommunicationEntity>
 
   @Post()
   @Roles(...ACCESS_ROLES)
-  create(@Body() dto: CreateCommunicationDto) {
-    return this.service.create(dto);
+  async create(@Body() dto: CreateCommunicationDto) {
+    const comm = await this.service.create(dto);
+    if (dto.channel === 'email' && dto.to_contact && dto.direction === 'outbound') {
+      this.emailService
+        .send({
+          to: dto.to_contact,
+          toName: dto.to_name,
+          subject: dto.subject ?? '(no subject)',
+          text: dto.content ?? '',
+          recipientType: (dto.recipient_type as 'claimant' | 'staff') ?? 'claimant',
+          caseId: dto.case_id,
+        })
+        .catch((err) => console.error('[Email] SendGrid error:', err?.response?.body ?? err));
+    }
+    return comm;
   }
 
   @Patch(':id')

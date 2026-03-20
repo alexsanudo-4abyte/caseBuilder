@@ -9,6 +9,7 @@ import { hmac } from '../shared/crypto';
 import { PublicIntakeDto } from './dto/public-intake.dto';
 import { FraudAnalysisService } from '../fraud-analysis/fraud-analysis.service';
 import { IntegrationsService } from '../integrations/integrations.service';
+import { NotificationService } from '../notifications/notification.service';
 
 @Injectable()
 export class IntakeGatewayService {
@@ -23,6 +24,7 @@ export class IntakeGatewayService {
     private readonly campaignRepo: Repository<TortCampaignEntity>,
     private readonly fraudAnalysisService: FraudAnalysisService,
     private readonly integrationsService: IntegrationsService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async submit(
@@ -73,6 +75,15 @@ export class IntakeGatewayService {
       .analyze(submission, claimant, isRepeat)
       .catch((err) => console.error('[FraudAnalysis] Failed:', err));
 
+    this.notificationService
+      .create({
+        type: 'new_submission',
+        message: `New intake submission from ${dto.full_name}`,
+        submission_id: submission.id,
+        claimant_name: dto.full_name,
+      })
+      .catch(() => {});
+
     if (dto.conversation && dto.conversation.length > 0) {
       this.analyzeConversation(submission, dto.conversation).catch((err) =>
         console.error('[ConversationAnalysis] Failed:', err),
@@ -112,6 +123,16 @@ export class IntakeGatewayService {
       console.error('[ConversationAnalysis] Failed:', err),
     );
 
+    const claimantName = (submission.raw_payload as Record<string, string>)?.full_name ?? userEmail;
+    this.notificationService
+      .create({
+        type: 'conversation_updated',
+        message: `${claimantName} added new information to their intake`,
+        submission_id: submissionId,
+        claimant_name: claimantName,
+      })
+      .catch(() => {});
+
     return { ok: true };
   }
 
@@ -139,7 +160,19 @@ export class IntakeGatewayService {
       uploaded_by: userId,
       uploaded_at: new Date().toISOString(),
     });
-    return this.documentRepo.save(doc);
+    const savedDoc = await this.documentRepo.save(doc);
+
+    const claimantName = (submission.raw_payload as Record<string, string>)?.full_name ?? userEmail;
+    this.notificationService
+      .create({
+        type: 'document_uploaded',
+        message: `${claimantName} uploaded a document: ${file.originalname}`,
+        submission_id: submissionId,
+        claimant_name: claimantName,
+      })
+      .catch(() => {});
+
+    return savedDoc;
   }
 
   async getDocumentsForSubmission(
