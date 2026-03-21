@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { apiClient } from '@/api/apiClient';
@@ -21,7 +21,8 @@ import {
   Sparkles,
   FolderOpen,
   Activity,
-  Target
+  Target,
+  Bell
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +52,11 @@ export default function Layout({ children, currentPageName }) {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
 
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notifRef = useRef(null);
+
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -63,6 +69,64 @@ export default function Layout({ children, currentPageName }) {
     };
     loadUser();
   }, []);
+
+  const fetchNotifCount = async () => {
+    try {
+      const res = await apiClient.notifications.unreadCount();
+      setUnreadCount(res.count ?? 0);
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    if (!user || user.role === 'claimant') return;
+    fetchNotifCount();
+    const interval = setInterval(fetchNotifCount, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const openNotifications = async () => {
+    if (!notifOpen) {
+      try {
+        const list = await apiClient.notifications.list(20);
+        setNotifications(list);
+      } catch (_) {}
+    }
+    setNotifOpen(v => !v);
+  };
+
+  const handleMarkRead = async (notif) => {
+    if (!notif.read) {
+      await apiClient.notifications.markRead(notif.id).catch(() => {});
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+    setNotifOpen(false);
+    if (notif.submission_id) {
+      navigate(createPageUrl('IntakeReview') + `?id=${notif.submission_id}`);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    await apiClient.notifications.markAllRead().catch(() => {});
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+  };
+
+  const NOTIF_ICONS = {
+    new_submission: '📥',
+    conversation_updated: '💬',
+    document_uploaded: '📎',
+  };
 
   const handleProfileSave = async (e) => {
     e.preventDefault();
@@ -224,6 +288,64 @@ export default function Layout({ children, currentPageName }) {
             </div>
 
             <div className="flex items-center gap-3">
+
+              {/* Notification Bell */}
+              {user?.role !== 'claimant' && (
+                <div className="relative" ref={notifRef}>
+                  <button
+                    onClick={openNotifications}
+                    className="relative p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    <Bell className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 min-w-[16px] h-4 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {notifOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                        <span className="text-sm font-semibold text-slate-900">Notifications</span>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAllRead}
+                            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+                        {notifications.length === 0 ? (
+                          <p className="text-sm text-slate-400 text-center py-8">No notifications yet</p>
+                        ) : (
+                          notifications.map(n => (
+                            <button
+                              key={n.id}
+                              onClick={() => handleMarkRead(n)}
+                              className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex items-start gap-3 ${!n.read ? 'bg-blue-50/40' : ''}`}
+                            >
+                              <span className="text-base mt-0.5 shrink-0">{NOTIF_ICONS[n.type] ?? '🔔'}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm leading-snug ${!n.read ? 'font-medium text-slate-900' : 'text-slate-600'}`}>
+                                  {n.message}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  {new Date(n.created_date).toLocaleString()}
+                                </p>
+                              </div>
+                              {!n.read && <span className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* User Menu */}
               <DropdownMenu>

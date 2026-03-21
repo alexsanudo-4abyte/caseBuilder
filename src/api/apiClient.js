@@ -188,6 +188,15 @@ export const agents = {
   },
 };
 
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export const notifications = {
+  list: (limit = 50) => http.get('/notifications', { params: { limit } }),
+  unreadCount: () => http.get('/notifications/unread-count'),
+  markRead: (id) => http.patch(`/notifications/${id}/read`),
+  markAllRead: () => http.patch('/notifications/read-all'),
+};
+
 // ─── App logs stub (used in NavigationTracker) ───────────────────────────────
 
 export const appLogs = {
@@ -207,6 +216,7 @@ export const apiClient = {
   staffUsers,
   agents,
   appLogs,
+  notifications,
 };
 
 export default apiClient;

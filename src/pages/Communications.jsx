@@ -54,6 +54,7 @@ export default function Communications() {
     subject: '',
     content: ''
   });
+  const [selectedRecipient, setSelectedRecipient] = useState(null);
 
   const { data: communications = [], isLoading } = useQuery({
     queryKey: ['communications', channelFilter],
@@ -67,21 +68,49 @@ export default function Communications() {
     queryFn: () => apiClient.entities.Case.list('-created_date', 200),
   });
 
+  const { data: staffUsers = [] } = useQuery({
+    queryKey: ['staff-users'],
+    queryFn: () => apiClient.staffUsers.list(),
+  });
+
   const createCommMutation = useMutation({
     mutationFn: (data) => apiClient.entities.Communication.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['communications'] });
       setNewMessageOpen(false);
-      setNewMessage({
-        case_id: '',
-        channel: 'email',
-        to_name: '',
-        to_contact: '',
-        subject: '',
-        content: ''
-      });
+      setNewMessage({ case_id: '', channel: 'email', to_name: '', to_contact: '', subject: '', content: '' });
+      setSelectedRecipient(null);
     },
   });
+
+  const ROLE_LABELS = {
+    claimant: 'Claimant',
+    attorney: 'Attorney',
+    intake_staff: 'Intake Staff',
+    case_manager: 'Case Manager',
+    admin: 'Admin',
+  };
+
+  const getRecipientsForCase = (caseId) => {
+    const c = cases.find(x => x.id === caseId);
+    if (!c) return [];
+    const recipients = [];
+    if (c.claimant_name && c.claimant_email) {
+      recipients.push({ key: 'claimant', role: 'Claimant', name: c.claimant_name, email: c.claimant_email });
+    }
+    if (c.assigned_user_id) {
+      const staff = staffUsers.find(u => u.id === c.assigned_user_id);
+      if (staff?.email) {
+        recipients.push({
+          key: staff.id,
+          role: ROLE_LABELS[staff.role] ?? staff.role,
+          name: staff.full_name,
+          email: staff.email,
+        });
+      }
+    }
+    return recipients;
+  };
 
   const filteredComms = communications.filter(c =>
     !searchQuery ||
@@ -124,7 +153,7 @@ export default function Communications() {
             Manage client communications with AI-powered insights
           </p>
         </div>
-        <Dialog open={newMessageOpen} onOpenChange={setNewMessageOpen}>
+        <Dialog open={newMessageOpen} onOpenChange={(open) => { setNewMessageOpen(open); if (!open) { setNewMessage({ case_id: '', channel: 'email', to_name: '', to_contact: '', subject: '', content: '' }); setSelectedRecipient(null); } }}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
@@ -136,54 +165,79 @@ export default function Communications() {
               <DialogTitle>Send New Message</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-4">
-              <div>
-                <Select 
-                  value={newMessage.case_id} 
-                  onValueChange={(v) => {
-                    const caseItem = cases.find(c => c.id === v);
-                    setNewMessage({ 
-                      ...newMessage, 
-                      case_id: v,
-                      to_name: caseItem?.claimant_name || '',
-                      to_contact: caseItem?.claimant_email || ''
-                    });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select case" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cases.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.claimant_name} - {c.case_number || c.id.slice(0, 8)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Select 
-                    value={newMessage.channel} 
-                    onValueChange={(v) => setNewMessage({ ...newMessage, channel: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="sms">SMS</SelectItem>
-                      <SelectItem value="portal_message">Portal Message</SelectItem>
-                      <SelectItem value="phone">Phone (Log Call)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Input
-                  value={newMessage.to_contact}
-                  onChange={(e) => setNewMessage({ ...newMessage, to_contact: e.target.value })}
-                  placeholder="Contact (email/phone)"
-                />
-              </div>
+              {/* Case */}
+              <Select
+                value={newMessage.case_id}
+                onValueChange={(v) => {
+                  setSelectedRecipient(null);
+                  setNewMessage({ ...newMessage, case_id: v, to_name: '', to_contact: '' });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select case" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cases.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.claimant_name} — {c.case_number || c.id.slice(0, 8).toUpperCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Recipient */}
+              {newMessage.case_id && (() => {
+                const recipients = getRecipientsForCase(newMessage.case_id);
+                return (
+                  <div className="space-y-2">
+                    <Select
+                      value={selectedRecipient?.key ?? ''}
+                      onValueChange={(key) => {
+                        const r = recipients.find(x => x.key === key);
+                        setSelectedRecipient(r ?? null);
+                        setNewMessage(m => ({ ...m, to_name: r?.name ?? '', to_contact: r?.email ?? '' }));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select recipient" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {recipients.length === 0 ? (
+                          <div className="px-3 py-2 text-sm text-slate-400">No contacts found for this case</div>
+                        ) : recipients.map((r) => (
+                          <SelectItem key={r.key} value={r.key}>
+                            <span className="font-medium">{r.name}</span>
+                            <span className="text-slate-400 ml-1">· {r.role}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {selectedRecipient && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-md">
+                        <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span className="text-sm text-slate-600 select-none">{selectedRecipient.email}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Channel */}
+              <Select
+                value={newMessage.channel}
+                onValueChange={(v) => setNewMessage({ ...newMessage, channel: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="portal_message">Portal Message</SelectItem>
+                  <SelectItem value="phone">Phone (Log Call)</SelectItem>
+                </SelectContent>
+              </Select>
               <Input
                 value={newMessage.subject}
                 onChange={(e) => setNewMessage({ ...newMessage, subject: e.target.value })}
@@ -202,8 +256,9 @@ export default function Communications() {
                   direction: 'outbound',
                   communication_date: new Date().toISOString(),
                   from_name: 'Firm',
+                  recipient_type: selectedRecipient?.key === 'claimant' ? 'claimant' : 'staff',
                 })}
-                disabled={!newMessage.case_id || !newMessage.content || createCommMutation.isPending}
+                disabled={!newMessage.case_id || !selectedRecipient || !newMessage.content || createCommMutation.isPending}
               >
                 {createCommMutation.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
