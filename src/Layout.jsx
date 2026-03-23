@@ -47,6 +47,11 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchRef = useRef(null);
+  const searchDebounce = useRef(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({ full_name: '', password: '' });
   const [profileSaving, setProfileSaving] = useState(false);
@@ -57,17 +62,26 @@ export default function Layout({ children, currentPageName }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef(null);
 
+  const API_HOST = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api').replace(/\/api$/, '');
+
+  const loadUser = async () => {
+    try {
+      const userData = await apiClient.auth.me();
+      setUser(userData);
+      setProfileForm({ full_name: userData.full_name, password: '' });
+    } catch (e) {
+      console.log('User not logged in');
+    }
+  };
+
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const userData = await apiClient.auth.me();
-        setUser(userData);
-        setProfileForm({ full_name: userData.full_name, password: '' });
-      } catch (e) {
-        console.log('User not logged in');
-      }
-    };
     loadUser();
+  }, []);
+
+  useEffect(() => {
+    const handler = () => loadUser();
+    window.addEventListener('cb:user-updated', handler);
+    return () => window.removeEventListener('cb:user-updated', handler);
   }, []);
 
   const fetchNotifCount = async () => {
@@ -93,6 +107,62 @@ export default function Layout({ children, currentPageName }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchRef.current?.querySelector('input')?.focus();
+      }
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        searchRef.current?.querySelector('input')?.blur();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    clearTimeout(searchDebounce.current);
+    if (val.trim().length < 2) {
+      setSearchResults(null);
+      setSearchOpen(false);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchOpen(true);
+    searchDebounce.current = setTimeout(async () => {
+      try {
+        const res = await apiClient.search.query(val.trim());
+        setSearchResults(res);
+      } catch (_) {
+        setSearchResults({ cases: [], submissions: [] });
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+  };
+
+  const handleSearchSelect = (type, id) => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults(null);
+    if (type === 'case') navigate(createPageUrl('CaseDetail') + `?id=${id}`);
+    else navigate(createPageUrl('IntakeReview') + `?id=${id}`);
+  };
 
   const openNotifications = async () => {
     if (!notifOpen) {
@@ -273,18 +343,74 @@ export default function Layout({ children, currentPageName }) {
               </button>
               
               {/* Search */}
-              <div className="hidden md:flex items-center">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input 
-                    placeholder="Search cases, claimants, documents..." 
-                    className="w-80 pl-10 bg-slate-50 border-slate-200 focus:border-blue-500"
-                  />
-                  <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex h-5 items-center gap-1 rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] text-slate-500">
-                    ⌘K
-                  </kbd>
+              {user?.role !== 'claimant' && (
+                <div className="hidden md:flex items-center" ref={searchRef}>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      placeholder="Search cases, claimants..."
+                      className="w-80 pl-10 bg-slate-50 border-slate-200 focus:border-blue-500"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      onFocus={() => { if (searchResults) setSearchOpen(true); }}
+                    />
+                    {!searchQuery && (
+                      <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex h-5 items-center gap-1 rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] text-slate-500">
+                        ⌘K
+                      </kbd>
+                    )}
+
+                    {searchOpen && (
+                      <div className="absolute left-0 top-full mt-1 w-96 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                        {searchLoading ? (
+                          <p className="text-sm text-slate-400 text-center py-6">Searching…</p>
+                        ) : searchResults && (searchResults.cases.length === 0 && searchResults.submissions.length === 0) ? (
+                          <p className="text-sm text-slate-400 text-center py-6">No results found</p>
+                        ) : searchResults ? (
+                          <div className="max-h-80 overflow-y-auto">
+                            {searchResults.cases.length > 0 && (
+                              <div>
+                                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Cases</p>
+                                {searchResults.cases.map(c => (
+                                  <button
+                                    key={c.id}
+                                    onClick={() => handleSearchSelect('case', c.id)}
+                                    className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3"
+                                  >
+                                    <FolderOpen className="w-4 h-4 text-blue-500 shrink-0" />
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-medium text-slate-900 truncate">{c.claimant_name || 'Unknown'}</p>
+                                      <p className="text-xs text-slate-400 truncate">{c.case_number} · {c.status} · {c.case_type}</p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            {searchResults.submissions.length > 0 && (
+                              <div>
+                                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Intake Submissions</p>
+                                {searchResults.submissions.map(s => (
+                                  <button
+                                    key={s.id}
+                                    onClick={() => handleSearchSelect('submission', s.id)}
+                                    className="w-full text-left px-4 py-2.5 hover:bg-slate-50 flex items-center gap-3"
+                                  >
+                                    <FileText className="w-4 h-4 text-emerald-500 shrink-0" />
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-medium text-slate-900 truncate">{s.raw_payload?.full_name || 'Unknown'}</p>
+                                      <p className="text-xs text-slate-400 truncate">{s.status} · {s.case_type || s.intake_channel || 'intake'}</p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="flex items-center gap-3">
@@ -351,8 +477,10 @@ export default function Layout({ children, currentPageName }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 pl-2 pr-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-medium">
-                      {user?.full_name?.charAt(0) || 'U'}
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-medium shrink-0">
+                      {user?.avatar_url
+                        ? <img src={API_HOST + user.avatar_url} alt="" className="w-full h-full object-cover" />
+                        : (user?.full_name?.charAt(0) || 'U')}
                     </div>
                     <div className="hidden md:block text-left">
                       <p className="text-sm font-medium text-slate-900">{user?.full_name || 'User'}</p>
@@ -362,10 +490,6 @@ export default function Layout({ children, currentPageName }) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setProfileOpen(true)}>
-                    <Users className="w-4 h-4 mr-2" />
-                    Edit profile
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate(createPageUrl('Settings'))}>
                     <Settings className="w-4 h-4 mr-2" />
                     Settings

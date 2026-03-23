@@ -108,6 +108,14 @@ export const auth = {
     return http.patch('/auth/profile', data);
   },
 
+  uploadAvatar(file) {
+    const form = new FormData();
+    form.append('file', file);
+    return http.post('/auth/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
   logout() {
     localStorage.removeItem('cb_access_token');
     window.location.href = '/Login';
@@ -197,6 +205,12 @@ export const notifications = {
   markAllRead: () => http.patch('/notifications/read-all'),
 };
 
+// ─── Search ───────────────────────────────────────────────────────────────────
+
+export const search = {
+  query: (q) => http.get('/search', { params: { q } }),
+};
+
 // ─── App logs stub (used in NavigationTracker) ───────────────────────────────
 
 export const appLogs = {
@@ -217,6 +231,7 @@ export const apiClient = {
   agents,
   appLogs,
   notifications,
+  search,
 };
 
 export default apiClient;

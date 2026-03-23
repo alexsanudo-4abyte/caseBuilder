@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiClient } from '@/api/apiClient';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,19 @@ import {
   Save,
   Loader2,
   CheckCircle,
-  Mail
+  Mail,
+  Camera,
 } from 'lucide-react';
+
+const API_HOST = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api').replace(/\/api$/, '');
 
 export default function SettingsPage() {
   const [user, setUser] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState({});
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef(null);
 
   const [profile, setProfile] = useState({
     full_name: '',
@@ -83,6 +88,22 @@ export default function SettingsPage() {
       setSaving(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
+    }
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const updated = await apiClient.auth.uploadAvatar(file);
+      setUser(updated);
+      window.dispatchEvent(new CustomEvent('cb:user-updated'));
+    } catch (err) {
+      console.error('Avatar upload failed', err);
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -184,8 +205,29 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center p-6 bg-slate-50 rounded-xl">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
-                    {user?.full_name?.charAt(0) || 'U'}
+                  <div className="relative w-20 h-20 mx-auto mb-4">
+                    <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold">
+                      {user?.avatar_url
+                        ? <img src={API_HOST + user.avatar_url} alt="" className="w-full h-full object-cover" />
+                        : (user?.full_name?.charAt(0) || 'U')}
+                    </div>
+                    <button
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={avatarUploading}
+                      className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-md transition-colors"
+                      title="Change profile photo"
+                    >
+                      {avatarUploading
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Camera className="w-3.5 h-3.5" />}
+                    </button>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
                   </div>
                   <p className="font-semibold text-slate-900">{user?.full_name || 'User'}</p>
                   <p className="text-sm text-slate-500">{user?.email}</p>

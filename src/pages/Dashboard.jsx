@@ -7,7 +7,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MetricCard from '../components/dashboard/MetricCard';
 import CasesTable from '../components/dashboard/CasesTable';
 import {
@@ -24,7 +23,6 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const [timeRange, setTimeRange] = useState('7d');
   const [user, setUser] = useState(null);
   const [selectedCaseId, setSelectedCaseId] = useState(null);
 
@@ -86,14 +84,6 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Tabs value={timeRange} onValueChange={setTimeRange}>
-            <TabsList className="bg-white border shadow-sm">
-              <TabsTrigger value="7d" className="text-sm">7D</TabsTrigger>
-              <TabsTrigger value="30d" className="text-sm">30D</TabsTrigger>
-              <TabsTrigger value="90d" className="text-sm">90D</TabsTrigger>
-              <TabsTrigger value="1y" className="text-sm">1Y</TabsTrigger>
-            </TabsList>
-          </Tabs>
           <Button variant="outline" size="icon" onClick={() => refetchCases()}>
             <RefreshCw className="w-4 h-4" />
           </Button>
