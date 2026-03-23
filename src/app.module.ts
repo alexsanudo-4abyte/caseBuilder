@@ -44,7 +44,7 @@ import { SearchModule } from './search/search.module';
           config.get('DATABASE_URL')?.includes('localhost') ||
           config.get('DATABASE_URL')?.includes('127.0.0.1')
             ? false
-            : { rejectUnauthorized: true },
+            : { rejectUnauthorized: false },
         extra: {
           max: 1,
           idleTimeoutMillis: 10000,
