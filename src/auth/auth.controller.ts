@@ -1,4 +1,18 @@
-import { Body, Controller, Get, Patch, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Req,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import * as fs from 'fs';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
@@ -63,6 +77,33 @@ export class AuthController {
   @Patch('claimant-profile')
   updateClaimantProfile(@Req() req: any, @Body() dto: UpdateClaimantProfileDto) {
     return this.authService.updateClaimantProfile(req.user.userId, dto);
+  }
+
+  @Roles(...ALL_ROLES)
+  @Post('avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_, __, cb) => {
+          const dir = join(process.cwd(), 'uploads', 'avatars');
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename: (_, file, cb) =>
+          cb(null, `${crypto.randomUUID()}${extname(file.originalname)}`),
+      }),
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+      fileFilter: (_, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new BadRequestException('Only image files are allowed'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadAvatar(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('No file provided');
+    return this.authService.uploadAvatar(req.user.userId, file.path);
   }
 
   @Roles(Role.CLAIMANT)

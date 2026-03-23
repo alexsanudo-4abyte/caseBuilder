@@ -27,6 +27,7 @@ import { IntakeGatewayModule } from './intake-gateway/intake-gateway.module';
 import { AiJobModule } from './ai-jobs/ai-job.module';
 import { FraudAnalysisModule } from './fraud-analysis/fraud-analysis.module';
 import { NotificationModule } from './notifications/notification.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   controllers: [AppController],
@@ -77,6 +78,7 @@ import { NotificationModule } from './notifications/notification.module';
     AiJobModule,
     FraudAnalysisModule,
     NotificationModule,
+    SearchModule,
   ],
   providers: [
     {

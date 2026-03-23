@@ -23,4 +23,7 @@ export class UserEntity extends BaseEntity {
 
   @Column({ nullable: true })
   office_address: string;
+
+  @Column({ nullable: true })
+  avatar_url: string;
 }

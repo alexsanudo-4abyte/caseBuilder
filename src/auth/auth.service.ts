@@ -89,6 +89,7 @@ export class AuthService {
       phone: user.phone,
       firm_name: user.firm_name,
       office_address: user.office_address,
+      avatar_url: user.avatar_url ?? null,
     };
   }
 
@@ -112,6 +113,12 @@ export class AuthService {
       where: { claimant_id: claimant.id },
       order: { created_date: 'DESC' },
     });
+  }
+
+  async uploadAvatar(userId: string, filePath: string) {
+    const avatarUrl = `/uploads/avatars/${filePath.split('/').pop()}`;
+    await this.users.update(userId, { avatar_url: avatarUrl } as any);
+    return this.me(userId);
   }
 
   async updateClaimantProfile(
