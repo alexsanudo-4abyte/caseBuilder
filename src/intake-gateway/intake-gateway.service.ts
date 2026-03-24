@@ -10,6 +10,7 @@ import { PublicIntakeDto } from './dto/public-intake.dto';
 import { FraudAnalysisService } from '../fraud-analysis/fraud-analysis.service';
 import { IntegrationsService } from '../integrations/integrations.service';
 import { NotificationService } from '../notifications/notification.service';
+import { CaseAnalysisService } from '../entities/case/case-analysis.service';
 
 @Injectable()
 export class IntakeGatewayService {
@@ -25,6 +26,7 @@ export class IntakeGatewayService {
     private readonly fraudAnalysisService: FraudAnalysisService,
     private readonly integrationsService: IntegrationsService,
     private readonly notificationService: NotificationService,
+    private readonly caseAnalysisService: CaseAnalysisService,
   ) {}
 
   async submit(
@@ -172,6 +174,10 @@ export class IntakeGatewayService {
       })
       .catch(() => {});
 
+    this.caseAnalysisService
+      .analyzeBySubmissionId(submissionId)
+      .catch((err) => console.error('[CaseAnalysis] Failed after document upload:', err));
+
     return savedDoc;
   }
 
@@ -318,5 +324,10 @@ Write a 2–3 sentence attorney-facing summary of this claimant's situation, inj
       qualification_score: result.qualification_score,
       case_type: result.case_type,
     });
+
+    // Re-run case analysis now that intake data has been refreshed
+    this.caseAnalysisService
+      .analyzeBySubmissionId(submission.id)
+      .catch((err) => console.error('[CaseAnalysis] Failed after conversation update:', err));
   }
 }

@@ -15,5 +15,6 @@ import { IntegrationsModule } from '../../integrations/integrations.module';
   ],
   controllers: [CaseController],
   providers: [CaseService, CaseAnalysisService],
+  exports: [CaseAnalysisService],
 })
 export class CaseModule {}

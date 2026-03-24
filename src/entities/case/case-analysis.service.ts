@@ -9,13 +9,15 @@ import { IntegrationsService } from '../../integrations/integrations.service';
 const ANALYSIS_SCHEMA = {
   type: 'object',
   properties: {
-    case_strength_score:   { type: 'number' },
-    credibility_score:     { type: 'number' },
-    settlement_probability:{ type: 'number' },
-    fraud_score:           { type: 'number' },
-    ai_risk_factors:       { type: 'array', items: { type: 'string' } },
-    ai_strength_factors:   { type: 'array', items: { type: 'string' } },
-    ai_case_summary:       { type: 'string' },
+    case_strength_score:    { type: 'number' },
+    credibility_score:      { type: 'number' },
+    settlement_probability: { type: 'number' },
+    fraud_score:            { type: 'number' },
+    estimated_value_low:    { type: 'number' },
+    estimated_value_high:   { type: 'number' },
+    ai_risk_factors:        { type: 'array', items: { type: 'string' } },
+    ai_strength_factors:    { type: 'array', items: { type: 'string' } },
+    ai_case_summary:        { type: 'string' },
   },
 };
 
@@ -131,6 +133,13 @@ Fraud risk. 0 = no concerns, 100 = strong fraud indicators. Look for: implausibl
 ### ai_strength_factors
 2–5 specific strengths (e.g. "Documented ER visit day of injury", "Product serial number provided", "Multiple named witnesses").
 
+### estimated_value_low and estimated_value_high (USD, integers)
+Conservative and optimistic settlement value estimates in US dollars (e.g. 50000 and 150000).
+Base on: campaign average settlement, injury severity, damages quantifiability, case strength, and settlement probability.
+If the campaign has an estimated avg settlement, use it as a reference midpoint and adjust based on case-specific factors.
+If no campaign data is available, estimate based on injury type and case strength alone.
+Do not return null — always provide a reasonable numeric range.
+
 ### ai_case_summary
 2–3 sentence attorney-facing summary of the case's overall position and recommended next steps.`;
 
@@ -139,6 +148,8 @@ Fraud risk. 0 = no concerns, 100 = strong fraud indicators. Look for: implausibl
       credibility_score: number;
       settlement_probability: number;
       fraud_score: number;
+      estimated_value_low: number;
+      estimated_value_high: number;
       ai_risk_factors: string[];
       ai_strength_factors: string[];
       ai_case_summary: string;
@@ -149,11 +160,21 @@ Fraud risk. 0 = no concerns, 100 = strong fraud indicators. Look for: implausibl
       credibility_score: result.credibility_score,
       settlement_probability: result.settlement_probability,
       fraud_score: result.fraud_score,
+      estimated_value_low: result.estimated_value_low,
+      estimated_value_high: result.estimated_value_high,
       ai_risk_factors: result.ai_risk_factors,
       ai_strength_factors: result.ai_strength_factors,
       ai_case_summary: result.ai_case_summary,
     });
 
     return this.caseRepo.findOne({ where: { id: caseId } }) as Promise<CaseEntity>;
+  }
+
+  async analyzeBySubmissionId(submissionId: string): Promise<void> {
+    const caseEntity = await this.caseRepo.findOne({
+      where: { intake_submission_id: submissionId },
+    });
+    if (!caseEntity) return; // no promoted case yet — skip silently
+    await this.analyze(caseEntity.id);
   }
 }

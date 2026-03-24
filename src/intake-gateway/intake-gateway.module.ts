@@ -9,6 +9,7 @@ import { IntakeGatewayService } from './intake-gateway.service';
 import { FraudAnalysisModule } from '../fraud-analysis/fraud-analysis.module';
 import { IntegrationsModule } from '../integrations/integrations.module';
 import { NotificationModule } from '../notifications/notification.module';
+import { CaseModule } from '../entities/case/case.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { NotificationModule } from '../notifications/notification.module';
     FraudAnalysisModule,
     IntegrationsModule,
     NotificationModule,
+    CaseModule,
   ],
   controllers: [IntakeGatewayController],
   providers: [IntakeGatewayService],
