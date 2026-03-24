@@ -28,7 +28,10 @@ import {
 export default function Cases() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('case_type') || 'all';
+  });
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [viewMode, setViewMode] = useState('table');
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiClient } from '@/api/apiClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -73,8 +74,9 @@ export default function Analytics() {
     return acc;
   }, {});
 
-  const typeData = Object.entries(typeDistribution).map(([name, value]) => ({
-    name: name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+  const typeData = Object.entries(typeDistribution).map(([key, value]) => ({
+    key,
+    name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
     value
   }));
 
@@ -353,12 +355,16 @@ export default function Analytics() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {typeData.map((type, index) => (
-              <div key={type.name} className="text-center p-4 bg-slate-50 rounded-xl">
-                <div 
+              <Link
+                key={type.key}
+                to={`/Cases?case_type=${encodeURIComponent(type.key)}`}
+                className="text-center p-4 bg-slate-50 rounded-xl hover:bg-slate-100 hover:shadow-sm transition-all cursor-pointer block"
+              >
+                <div
                   className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center"
                   style={{ backgroundColor: `${COLORS[index % COLORS.length]}20` }}
                 >
-                  <span 
+                  <span
                     className="text-lg font-bold"
                     style={{ color: COLORS[index % COLORS.length] }}
                   >
@@ -369,7 +375,7 @@ export default function Analytics() {
                 <p className="text-xs text-slate-500">
                   {totalCases > 0 ? ((type.value / totalCases) * 100).toFixed(1) : 0}% of total
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         </CardContent>
