@@ -6,6 +6,7 @@ import ClientCaseProfile from '../components/cases/ClientCaseProfile';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link } from 'react-router-dom';
 import {
   DollarSign,
   TrendingUp,
@@ -14,7 +15,8 @@ import {
   ArrowUpRight,
   Wallet,
   Receipt,
-  Calculator
+  Calculator,
+  ExternalLink,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -343,6 +345,78 @@ export default function Financials() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Case Value Breakdown */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-purple-600" />
+            Case Value Breakdown
+          </CardTitle>
+          <p className="text-sm text-slate-500">AI-estimated settlement range per case. Run analysis on a case to generate its range.</p>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-2 pr-4 font-medium text-slate-500">Claimant</th>
+                  <th className="text-left py-2 pr-4 font-medium text-slate-500">Type</th>
+                  <th className="text-left py-2 pr-4 font-medium text-slate-500">Status</th>
+                  <th className="text-right py-2 pr-4 font-medium text-slate-500">Low</th>
+                  <th className="text-right py-2 pr-4 font-medium text-slate-500">High</th>
+                  <th className="text-right py-2 pr-4 font-medium text-slate-500">Midpoint</th>
+                  <th className="text-right py-2 font-medium text-slate-500">Settlement %</th>
+                  <th className="py-2" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {[...cases]
+                  .sort((a, b) => {
+                    const aVal = ((a.estimated_value_high || 0) + (a.estimated_value_low || 0)) / 2;
+                    const bVal = ((b.estimated_value_high || 0) + (b.estimated_value_low || 0)) / 2;
+                    return bVal - aVal;
+                  })
+                  .map((c) => {
+                    const hasValue = c.estimated_value_low != null && c.estimated_value_high != null;
+                    const midpoint = hasValue ? ((c.estimated_value_low + c.estimated_value_high) / 2) : null;
+                    return (
+                      <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3 pr-4 font-medium text-slate-900">{c.claimant_name || '—'}</td>
+                        <td className="py-3 pr-4 text-slate-500 capitalize">{(c.case_type || '—').replace(/_/g, ' ')}</td>
+                        <td className="py-3 pr-4">
+                          <Badge variant="outline" className="capitalize text-xs">{c.status}</Badge>
+                        </td>
+                        <td className="py-3 pr-4 text-right text-slate-700">
+                          {hasValue ? formatCurrency(c.estimated_value_low) : <span className="text-slate-400 italic">—</span>}
+                        </td>
+                        <td className="py-3 pr-4 text-right text-slate-700">
+                          {hasValue ? formatCurrency(c.estimated_value_high) : <span className="text-slate-400 italic">—</span>}
+                        </td>
+                        <td className="py-3 pr-4 text-right font-semibold text-slate-900">
+                          {midpoint != null ? formatCurrency(midpoint) : <span className="text-slate-400 italic">No estimate</span>}
+                        </td>
+                        <td className="py-3 pr-4 text-right">
+                          {c.settlement_probability != null
+                            ? <span className={`font-medium ${c.settlement_probability >= 60 ? 'text-emerald-600' : c.settlement_probability >= 30 ? 'text-amber-600' : 'text-red-500'}`}>{c.settlement_probability}%</span>
+                            : <span className="text-slate-400">—</span>}
+                        </td>
+                        <td className="py-3 text-right">
+                          <Link
+                            to={`/CaseDetail?id=${c.id}`}
+                            className="text-blue-500 hover:text-blue-700 inline-flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Client Case Profile Modal */}
       <ClientCaseProfile
