@@ -756,7 +756,7 @@ export default function CaseDetail() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {currentCase.estimated_value_low && currentCase.estimated_value_high ? (
+              {currentCase.estimated_value_low != null && currentCase.estimated_value_high != null ? (
                 <div className="text-center">
                   <p className="text-3xl font-bold text-slate-900">
                     ${(currentCase.estimated_value_low / 1000).toFixed(0)}K – ${(currentCase.estimated_value_high / 1000).toFixed(0)}K

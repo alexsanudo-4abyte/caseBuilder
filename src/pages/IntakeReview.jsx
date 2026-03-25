@@ -130,7 +130,7 @@ export default function IntakeReview() {
     onSuccess: (_, { status }) => {
       queryClient.invalidateQueries({ queryKey: ['intake-submissions'] });
       toast.success(`Submission marked as ${STATUS_CONFIG[status]?.label ?? status}`);
-      setSelectedSubmission(null);
+      setSelectedSubmission(prev => prev ? { ...prev, status } : null);
       setAdminNotes('');
     },
     onError: () => toast.error('Failed to update status'),
