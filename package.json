@@ -1,0 +1,20 @@
+{
+  "name": "casebuilder",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Case Builder monorepo — NestJS API serving a React SPA",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "be-casebuilder",
+    "fe-casebuilder"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=fe-casebuilder && npm run build --workspace=be-casebuilder",
+    "start": "npm run start:prod --workspace=be-casebuilder",
+    "seed": "npm run seed --workspace=be-casebuilder",
+    "dev:be": "npm run start:dev --workspace=be-casebuilder",
+    "dev:fe": "npm run dev --workspace=fe-casebuilder"
+  }
+}

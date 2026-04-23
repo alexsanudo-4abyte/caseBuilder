@@ -14,7 +14,9 @@ No test framework is configured.
 
 ## Architecture
 
-NestJS 10 + TypeScript (strict) + TypeORM + PostgreSQL. Global prefix `/api`. CORS open for `localhost:5173` and `localhost:4173`.
+NestJS 11 + TypeScript (strict) + TypeORM + PostgreSQL. Global prefix `/api`. CORS open for `localhost:5173` and `localhost:4173` in dev.
+
+In production, `ServeStaticModule` serves the built React SPA from `../fe-casebuilder/dist`, with `/api/{*path}` and `/uploads/{*path}` excluded so API and upload routes are not hijacked by the SPA fallback.
 
 ### Auth
 
