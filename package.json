@@ -11,7 +11,7 @@
     "fe-casebuilder"
   ],
   "scripts": {
-    "build": "npm run build --workspace=fe-casebuilder && npm run build --workspace=be-casebuilder",
+    "build": "npm run build --workspace=fe-casebuilder & npm run build --workspace=be-casebuilder & wait",
     "start": "npm run start:prod --workspace=be-casebuilder",
     "seed": "npm run seed --workspace=be-casebuilder",
     "dev:be": "npm run start:dev --workspace=be-casebuilder",
