@@ -62,10 +62,24 @@ export class IntakeGatewayService {
       await this.claimantRepo.save(claimant);
     }
 
+    let resolvedCampaignId: string | undefined = undefined;
+    if (dto.tort_campaign_id) {
+      const campaign = await this.campaignRepo.findOne({
+        where: { id: dto.tort_campaign_id },
+      });
+      if (campaign) {
+        resolvedCampaignId = dto.tort_campaign_id;
+      } else {
+        console.warn(
+          `[IntakeGateway] tort_campaign_id ${dto.tort_campaign_id} not found, saving submission with null campaign`,
+        );
+      }
+    }
+
     const { consent_given, consent_version, ...payloadFields } = dto;
     const submission = this.submissionRepo.create({
       claimant_id: claimant.id,
-      tort_campaign_id: dto.tort_campaign_id,
+      tort_campaign_id: resolvedCampaignId,
       intake_channel: dto.intake_channel ?? 'web_form',
       raw_payload: payloadFields,
       status: 'pending_review',
