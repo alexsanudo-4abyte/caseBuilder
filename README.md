@@ -4,8 +4,8 @@ A legal case management platform. Monorepo with two workspaces; in production, t
 
 ```
 casebuilder/
-├── fe-casebuilder/   # React 18 SPA (Vite) — http://localhost:5173 (dev)
-└── be-casebuilder/   # NestJS REST API     — http://localhost:3000 (dev)
+├── fe-casebuilder/   # React 18 SPA (Vite) — http://localhost:5172 (dev)
+└── be-casebuilder/   # NestJS REST API     — http://localhost:3001 (dev)
 ```
 
 ---
@@ -40,17 +40,17 @@ ANTHROPIC_MODEL=claude-sonnet-4-6
 SENDGRID_API_KEY=...
 SENDGRID_FROM_EMAIL=...
 SENDGRID_FROM_NAME=Case Builder
-FRONTEND_URL=http://localhost:5173
-PORT=3000
+FRONTEND_URL=http://localhost:5172
+PORT=3001
 ```
 
 ### `fe-casebuilder/.env.local`
 
 ```env
-VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_BASE_URL=http://localhost:3001/api
 ```
 
-Only needed in dev (the SPA runs on :5173 and hits the API on :3000). In prod, leave unset — the client falls back to `/api` same-origin.
+Only needed in dev (the SPA runs on :5172 and hits the API on :3001). In prod, leave unset — the client falls back to `/api` same-origin.
 
 ---
 
@@ -67,11 +67,11 @@ Login: `admin@casebuilder.com` / `password123`.
 ## Run (dev, two terminals)
 
 ```bash
-npm run dev:be   # NestJS on :3000
-npm run dev:fe   # Vite on :5173
+npm run dev:be   # NestJS on :3001
+npm run dev:fe   # Vite on :5172
 ```
 
-Open `http://localhost:5173`.
+Open `http://localhost:5172`.
 
 ---
 
@@ -82,7 +82,7 @@ npm run build    # vite build -> fe-casebuilder/dist, then nest build -> be-case
 npm run start    # node be-casebuilder/dist/src/main -- serves SPA + API
 ```
 
-Open `http://localhost:3000`. NestJS's `ServeStaticModule` serves the SPA; `/api/*` routes still hit the API, `/uploads/*` still hits uploaded files.
+Open `http://localhost:3001`. NestJS's `ServeStaticModule` serves the SPA; `/api/*` routes still hit the API, `/uploads/*` still hits uploaded files.
 
 ---
 

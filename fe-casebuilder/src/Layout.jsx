@@ -62,7 +62,7 @@ export default function Layout({ children, currentPageName }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef(null);
 
-  const API_HOST = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api').replace(/\/api$/, '');
+  const API_HOST = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api').replace(/\/api$/, '');
 
   const loadUser = async () => {
     try {

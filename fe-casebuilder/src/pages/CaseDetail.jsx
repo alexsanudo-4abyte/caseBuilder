@@ -461,7 +461,7 @@ export default function CaseDetail() {
                           </div>
                           {doc.file_url && (
                             <Button variant="ghost" size="sm" asChild>
-                              <a href={`http://localhost:3000${doc.file_url}`} target="_blank" rel="noopener noreferrer">View</a>
+                              <a href={`http://localhost:3001${doc.file_url}`} target="_blank" rel="noopener noreferrer">View</a>
                             </Button>
                           )}
                         </div>

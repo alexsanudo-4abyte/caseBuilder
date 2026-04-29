@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev        # Start dev server (http://localhost:5173)
+npm run dev        # Start dev server (http://localhost:5172)
 npm run build      # Production build
 npm run preview    # Preview production build
 npm run lint       # ESLint
@@ -69,4 +69,4 @@ Lints `components/`, `pages/`, and `Layout.jsx`. Ignores `lib/` and `components/
 
 ## Environment
 
-For local dev, set `VITE_API_BASE_URL=http://localhost:3000/api` in `.env.local` (cross-origin to the NestJS backend on :3000). In production the SPA is served by NestJS from the same origin, so `VITE_API_BASE_URL` is left unset and `apiClient.js` falls back to `/api`.
+For local dev, set `VITE_API_BASE_URL=http://localhost:3001/api` in `.env.local` (cross-origin to the NestJS backend on :3001). In production the SPA is served by NestJS from the same origin, so `VITE_API_BASE_URL` is left unset and `apiClient.js` falls back to `/api`.

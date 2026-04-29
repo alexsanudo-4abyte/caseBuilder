@@ -20,7 +20,7 @@ import {
   Camera,
 } from 'lucide-react';
 
-const API_HOST = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api').replace(/\/api$/, '');
+const API_HOST = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api').replace(/\/api$/, '');
 
 export default function SettingsPage() {
   const [user, setUser] = useState(null);

@@ -51,14 +51,14 @@ async function bootstrap() {
 
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['http://localhost:5173', 'http://localhost:4173'];
+    : ['http://localhost:5172', 'http://localhost:4172'];
 
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
   });
 
-  const port = process.env.PORT ?? 3000;
+  const port = process.env.PORT ?? 3001;
   await app.listen(port);
   console.log(`Backend running on http://localhost:${port}`);
 }

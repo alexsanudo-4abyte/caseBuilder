@@ -4,8 +4,8 @@ A legal case management platform. The repo is a monorepo with two independent pa
 
 ```
 casebuilder/
-├── fe-casebuilder/   # React 18 SPA (Vite) — http://localhost:5173
-└── be-casebuilder/   # NestJS REST API     — http://localhost:3000
+├── fe-casebuilder/   # React 18 SPA (Vite) — http://localhost:5172
+└── be-casebuilder/   # NestJS REST API     — http://localhost:3001
 ```
 
 ---
@@ -43,7 +43,7 @@ JWT_SECRET=casebuilder-jwt-secret-dev
 JWT_EXPIRES_IN=7d
 ANTHROPIC_API_KEY=sk-ant-...
 ANTHROPIC_MODEL=claude-sonnet-4-6
-PORT=3000
+PORT=3001
 ```
 
 Replace `<your-pg-user>` with your local PostgreSQL username. `ANTHROPIC_API_KEY` is only required if you use the LLM integration endpoint.
@@ -64,7 +64,7 @@ Seed credentials: `admin@casebuilder.com` / `password123`
 npm run start:dev
 ```
 
-The API is available at `http://localhost:3000/api`. TypeORM runs with `synchronize: true` in dev — the schema is auto-migrated on every startup.
+The API is available at `http://localhost:3001/api`. TypeORM runs with `synchronize: true` in dev — the schema is auto-migrated on every startup.
 
 ### Architecture overview
 
@@ -157,7 +157,7 @@ npm install
 Create `fe-casebuilder/.env.local`:
 
 ```env
-VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_BASE_URL=http://localhost:3001/api
 ```
 
 ### 3. Start the dev server
@@ -166,7 +166,7 @@ VITE_API_BASE_URL=http://localhost:3000/api
 npm run dev
 ```
 
-The app is available at `http://localhost:5173`.
+The app is available at `http://localhost:5172`.
 
 ### Architecture overview
 
@@ -199,7 +199,7 @@ The app is available at `http://localhost:5173`.
 ### Useful commands
 
 ```bash
-npm run dev        # Dev server (http://localhost:5173)
+npm run dev        # Dev server (http://localhost:5172)
 npm run build      # Production build
 npm run preview    # Preview production build locally
 npm run lint       # ESLint (quiet)
@@ -220,4 +220,4 @@ cd be-casebuilder && npm run start:dev
 cd fe-casebuilder && npm run dev
 ```
 
-Then open `http://localhost:5173` and log in with `admin@casebuilder.com` / `password123`.
+Then open `http://localhost:5172` and log in with `admin@casebuilder.com` / `password123`.

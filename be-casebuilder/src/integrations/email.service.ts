@@ -16,7 +16,7 @@ export class EmailService {
     const apiKey = config.get<string>('SENDGRID_API_KEY');
     this.fromEmail = config.get<string>('SENDGRID_FROM_EMAIL') ?? '';
     this.fromName = config.get<string>('SENDGRID_FROM_NAME') ?? 'Case Builder';
-    this.frontendUrl = (config.get<string>('FRONTEND_URL') ?? 'http://localhost:5173').replace(/\/$/, '');
+    this.frontendUrl = (config.get<string>('FRONTEND_URL') ?? 'http://localhost:5172').replace(/\/$/, '');
     this.enabled = !!apiKey;
     if (apiKey) sgMail.setApiKey(apiKey);
   }

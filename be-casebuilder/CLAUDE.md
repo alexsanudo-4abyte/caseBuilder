@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run start:dev  # Start with watch mode (port 3000)
+npm run start:dev  # Start with watch mode (port 3001)
 npm run build      # Compile TypeScript
 npm run seed       # Seed database with sample data
 ```
@@ -14,7 +14,7 @@ No test framework is configured.
 
 ## Architecture
 
-NestJS 11 + TypeScript (strict) + TypeORM + PostgreSQL. Global prefix `/api`. CORS open for `localhost:5173` and `localhost:4173` in dev.
+NestJS 11 + TypeScript (strict) + TypeORM + PostgreSQL. Global prefix `/api`. CORS open for `localhost:5172` and `localhost:4172` in dev.
 
 In production, `ServeStaticModule` serves the built React SPA from `../fe-casebuilder/dist`, with `/api/{*path}` and `/uploads/{*path}` excluded so API and upload routes are not hijacked by the SPA fallback.
 
@@ -74,7 +74,7 @@ JWT_SECRET=casebuilder-jwt-secret-dev
 JWT_EXPIRES_IN=7d
 ANTHROPIC_API_KEY=sk-ant-...
 ANTHROPIC_MODEL=claude-sonnet-4-6
-PORT=3000
+PORT=3001
 ```
 
 `synchronize: true` is set in dev — TypeORM auto-migrates the schema on startup.

@@ -16,5 +16,8 @@
     "seed": "npm run seed --workspace=be-casebuilder",
     "dev:be": "npm run start:dev --workspace=be-casebuilder",
     "dev:fe": "npm run dev --workspace=fe-casebuilder"
+  },
+  "dependencies": {
+    "@nestjs/platform-express": "^11.1.19"
   }
 }
